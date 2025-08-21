@@ -1,0 +1,6 @@
+#!/bin/bash
+# Docker Compose wrapper script
+# This script provides compatibility for the traditional docker-compose command
+# by forwarding all arguments to the new 'docker compose' command
+
+exec docker compose "$@"

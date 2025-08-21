@@ -1,0 +1,57 @@
+{
+  "common": {
+    "ok": "확인",
+    "cancel": "취소",
+    "confirm": "확인",
+    "delete": "삭제",
+    "edit": "편집",
+    "save": "저장",
+    "loading": "로딩 중...",
+    "retry": "다시 시도",
+    "error": "오류",
+    "success": "성공",
+    "warning": "경고",
+    "info": "정보",
+    "close": "닫기",
+    "back": "뒤로",
+    "next": "다음",
+    "previous": "이전",
+    "submit": "제출",
+    "search": "검색",
+    "filter": "필터",
+    "sort": "정렬",
+    "refresh": "새로고침",
+    "share": "공유",
+    "login": "로그인",
+    "logout": "로그아웃",
+    "register": "회원가입",
+    "email": "이메일",
+    "password": "비밀번호",
+    "username": "사용자명"
+  },
+  "navigation": {
+    "home": "홈",
+    "explore": "탐색",
+    "notifications": "알림",
+    "messages": "메시지",
+    "profile": "프로필",
+    "settings": "설정"
+  },
+  "time": {
+    "justNow": "방금 전",
+    "minutesAgo": "{{count}}분 전",
+    "hoursAgo": "{{count}}시간 전",
+    "daysAgo": "{{count}}일 전",
+    "weeksAgo": "{{count}}주 전",
+    "monthsAgo": "{{count}}개월 전",
+    "yearsAgo": "{{count}}년 전"
+  },
+  "moments": {
+    "title": "아름다운 순간",
+    "create": "순간 만들기",
+    "like": "좋아요",
+    "comment": "댓글",
+    "share": "공유",
+    "placeholder": "아름다운 순간을 공유해주세요..."
+  }
+}
