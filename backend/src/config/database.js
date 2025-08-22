@@ -6,26 +6,36 @@ const dbConfig = {
   // 连接选项
   options: {
     // 连接池配置
-    maxPoolSize: 10, // 最大连接数
-    minPoolSize: 2,  // 最小连接数
-    maxIdleTimeMS: 30000, // 连接空闲时间
-    serverSelectionTimeoutMS: 5000, // 服务器选择超时
-    socketTimeoutMS: 45000, // Socket超时
+    maxPoolSize: 20, // 增加最大连接数
+    minPoolSize: 5,  // 增加最小连接数
+    maxIdleTimeMS: 60000, // 增加连接空闲时间到60秒
+    serverSelectionTimeoutMS: 10000, // 增加服务器选择超时到10秒
+    socketTimeoutMS: 60000, // 增加Socket超时到60秒
+    connectTimeoutMS: 10000, // 添加连接超时
+    heartbeatFrequencyMS: 10000, // 心跳频率
     
     // 缓冲配置
-      bufferCommands: false, // 禁用mongoose缓冲
+    bufferCommands: false, // 禁用mongoose缓冲
     
     // 其他配置
     autoIndex: process.env.NODE_ENV !== 'production', // 生产环境禁用自动索引
     autoCreate: true, // 自动创建集合
-    family: 4 // 使用IPv4，跳过IPv6
+    family: 4, // 使用IPv4，跳过IPv6
+    
+    // 重试配置
+    retryWrites: true, // 启用写重试
+    retryReads: true, // 启用读重试
+    
+    // 压缩配置
+    compressors: ['zlib'], // 启用压缩
   },
   
   // 重连配置
   reconnect: {
-    maxRetries: 5,
-    retryDelay: 1000, // 1秒
-    backoffFactor: 2, // 指数退避
+    maxRetries: 10, // 增加重试次数
+    retryDelay: 2000, // 增加初始延迟到2秒
+    backoffFactor: 1.5, // 减少退避因子，避免延迟过长
+    maxDelay: 30000, // 最大延迟30秒
   }
 };
 
@@ -137,20 +147,32 @@ class DatabaseConnection {
   async handleReconnect() {
     if (this.retryCount >= dbConfig.reconnect.maxRetries) {
       logger.error(`重连失败，已达到最大重试次数: ${dbConfig.reconnect.maxRetries}`);
+      // 重置重试计数，允许后续重连
+      setTimeout(() => {
+        this.retryCount = 0;
+        logger.info('重置重连计数，允许新的重连尝试');
+      }, 60000); // 1分钟后重置
       return;
     }
+
+    let delay = dbConfig.reconnect.retryDelay * 
+                Math.pow(dbConfig.reconnect.backoffFactor, this.retryCount);
     
-    const delay = dbConfig.reconnect.retryDelay * 
-                 Math.pow(dbConfig.reconnect.backoffFactor, this.retryCount);
-    
+    // 限制最大延迟
+    delay = Math.min(delay, dbConfig.reconnect.maxDelay);
+
     this.retryCount++;
     logger.info(`${delay}ms后尝试第${this.retryCount}次重连...`);
-    
+
     setTimeout(async () => {
       try {
         await this.connect();
       } catch (error) {
         logger.error(`第${this.retryCount}次重连失败:`, error.message);
+        // 继续尝试重连
+        if (this.retryCount < dbConfig.reconnect.maxRetries) {
+          this.handleReconnect();
+        }
       }
     }, delay);
   }

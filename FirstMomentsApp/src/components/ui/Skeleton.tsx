@@ -151,10 +151,10 @@ export const Skeleton: React.FC<SkeletonProps> = ({
     };
 
     if (width) {
-      baseStyle.width = typeof width === 'string' ? width : width;
+      baseStyle.width = width as any;
     }
     if (height) {
-      baseStyle.height = typeof height === 'string' ? height : height;
+      baseStyle.height = height as any;
     }
 
     if (variant === 'text') {
@@ -227,7 +227,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
     const titleConfig = typeof title === 'object' ? title : {};
     const titleStyle: ViewStyle = {
       height: 16,
-      width: titleConfig.width || '60%',
+      width: (titleConfig.width || '60%') as any,
       backgroundColor: colors.gray[200],
       borderRadius: borderRadius.sm,
       marginBottom: spacing.sm,
@@ -256,7 +256,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
           
           const lineStyle: ViewStyle = {
             height: 14,
-            width: typeof lineWidth === 'string' ? lineWidth : lineWidth,
+            width: lineWidth as any,
             backgroundColor: colors.gray[200],
             borderRadius: borderRadius.sm,
             marginBottom: index < rows - 1 ? spacing.xs : 0,

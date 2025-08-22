@@ -306,15 +306,15 @@ export const DatePicker: React.FC<DatePickerProps> = ({
               </View>
             </Modal>
           ) : (
-            {/* <DateTimePicker
+            /* <DateTimePicker
               value={tempDate}
               mode={mode}
               display="default"
               onChange={handleDateChange}
               minimumDate={minimumDate}
               maximumDate={maximumDate}
-            /> */}
-            <Text>DateTimePicker 组件需要安装依赖</Text>
+            /> */
+            null
           )}
         </>
       )}

@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
-  Alert,
   TextInput,
   KeyboardAvoidingView,
   Platform
@@ -19,9 +18,11 @@ import {
   fetchMomentAsync,
   toggleLikeAsync,
   addCommentAsync,
-  deleteCommentAsync
+  deleteCommentAsync,
+  deleteMomentAsync
 } from '../../store/slices/momentSlice';
 import { LoadingIndicator } from '../../components/ui/LoadingStates';
+import { useErrorHandler } from '../../hooks/useErrorHandler';
 import { colors, fontSize, fontWeight, spacing, borderRadius } from '../../styles';
 
 const { width } = Dimensions.get('window');
@@ -40,6 +41,7 @@ const MomentDetailScreen: React.FC<MomentDetailScreenProps> = ({ route, navigati
   const dispatch = useDispatch();
   const { currentMoment, isLoading, error } = useSelector((state: RootState) => state.moment);
   const { user } = useSelector((state: RootState) => state.auth);
+  const { handleError, showSuccess, showWarning } = useErrorHandler();
   
   const [commentText, setCommentText] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
@@ -66,33 +68,88 @@ const MomentDetailScreen: React.FC<MomentDetailScreenProps> = ({ route, navigati
         content: commentText.trim()
       }) as any);
       setCommentText('');
+      showSuccess('评论添加成功');
     } catch (error) {
-      Alert.alert('错误', '添加评论失败');
+      handleError(error, {
+        showAlert: true,
+        showToast: false
+      });
     } finally {
       setIsSubmittingComment(false);
     }
   };
 
   const handleDeleteComment = (commentId: string) => {
-    Alert.alert(
-      '删除评论',
-      '确定要删除这条评论吗？',
-      [
-        { text: '取消', style: 'cancel' },
-        {
-          text: '删除',
-          style: 'destructive',
-          onPress: () => {
-            if (currentMoment) {
-              dispatch(deleteCommentAsync({
-                id: currentMoment.id,
-                commentId
-              }) as any);
+    // 使用Alert进行确认对话框
+    import('react-native').then(({ Alert }) => {
+      Alert.alert(
+        '删除评论',
+        '确定要删除这条评论吗？',
+        [
+          { text: '取消', style: 'cancel' },
+          {
+            text: '删除',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                if (currentMoment) {
+                  await dispatch(deleteCommentAsync({
+                    momentId: currentMoment.id,
+                    commentId
+                  }) as any);
+                  showSuccess('评论删除成功');
+                }
+              } catch (error) {
+                handleError(error, {
+                  showAlert: true,
+                  showToast: false
+                });
+              }
             }
           }
-        }
-      ]
-    );
+        ]
+      );
+    });
+  };
+
+  const handleEditMoment = () => {
+    if (currentMoment) {
+      navigation.navigate('CreateMoment', {
+        moment: currentMoment,
+        isEdit: true
+      });
+    }
+  };
+
+  const handleDeleteMoment = () => {
+    // 使用Alert进行确认对话框
+    import('react-native').then(({ Alert }) => {
+      Alert.alert(
+        '删除时光记录',
+        '确定要删除这条时光记录吗？此操作无法撤销。',
+        [
+          { text: '取消', style: 'cancel' },
+          {
+            text: '删除',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                if (currentMoment) {
+                  await dispatch(deleteMomentAsync(currentMoment.id) as any);
+                  showSuccess('时光记录删除成功');
+                  navigation.goBack();
+                }
+              } catch (error) {
+                handleError(error, {
+                  showAlert: true,
+                  showToast: false
+                });
+              }
+            }
+          }
+        ]
+      );
+    });
   };
 
   const formatDate = (dateString: string) => {
@@ -158,6 +215,28 @@ const MomentDetailScreen: React.FC<MomentDetailScreenProps> = ({ route, navigati
 
   const isLiked = currentMoment.likes?.some(like => like.user.id === user?.id);
   const canDeleteComment = (comment: any) => comment.userId === user?.id;
+  const isOwner = currentMoment.creator?.id === user?.id;
+
+  // 设置导航栏右侧按钮
+  useEffect(() => {
+    if (isOwner && currentMoment) {
+      navigation.setOptions({
+        headerRight: () => (
+          <View style={{ flexDirection: 'row' }}>
+            <TouchableOpacity
+              onPress={handleEditMoment}
+              style={{ marginRight: 15 }}
+            >
+              <Ionicons name="create-outline" size={24} color={colors.primary} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleDeleteMoment}>
+              <Ionicons name="trash-outline" size={24} color={colors.error} />
+            </TouchableOpacity>
+          </View>
+        )
+      });
+    }
+  }, [isOwner, currentMoment, navigation]);
 
   return (
     <KeyboardAvoidingView 
@@ -169,21 +248,25 @@ const MomentDetailScreen: React.FC<MomentDetailScreenProps> = ({ route, navigati
         <View style={styles.header}>
           <View style={styles.userInfo}>
             <Image
-              source={{ uri: currentMoment.author?.avatar || 'https://via.placeholder.com/40' }}
-              style={styles.avatar}
-            />
+                  source={{ uri: currentMoment.creator?.avatar || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiM0RUNEQUM0Ii8+Cjx0ZXh0IHg9IjIwIiB5PSIyNSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+5aS05YOP5aS05YOP</dGV4dD4KPHN2Zz4=' }}
+                  style={styles.avatar}
+                />
             <View style={styles.userDetails}>
-              <Text style={styles.username}>{currentMoment.author?.username || '未知用户'}</Text>
+              <Text style={styles.username}>{currentMoment.creator?.username || '未知用户'}</Text>
               <Text style={styles.dateText}>{formatDate(currentMoment.momentDate)}</Text>
             </View>
           </View>
           
           {currentMoment.location && (
-            <View style={styles.locationContainer}>
-              <Ionicons name="location" size={16} color={colors.textSecondary} />
-              <Text style={styles.locationText}>{currentMoment.location.formatted || '未知位置'}</Text>
-            </View>
-          )}
+          <View style={styles.locationContainer}>
+            <Ionicons name="location-outline" size={16} color={colors.textSecondary} />
+            <Text style={styles.locationText}>
+              {currentMoment.location.address?.formatted || 
+               currentMoment.location.placeName || 
+               '未知位置'}
+            </Text>
+          </View>
+        )}
         </View>
 
         {/* Content */}
@@ -274,7 +357,7 @@ const MomentDetailScreen: React.FC<MomentDetailScreenProps> = ({ route, navigati
             currentMoment.comments.map((comment) => (
               <View key={comment.id} style={styles.commentItem}>
                 <Image
-                  source={{ uri: comment.user.avatar || 'https://via.placeholder.com/32' }}
+                  source={{ uri: comment.user.avatar || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTYiIGZpbGw9IiM0RUNEQUM0Ii8+Cjx0ZXh0IHg9IjE2IiB5PSIyMCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEwIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+5aS05YOP</dGV4dD4KPHN2Zz4=' }}
                   style={styles.commentAvatar}
                 />
                 <View style={styles.commentContent}>

@@ -20,7 +20,7 @@ const auth = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // 检查用户是否仍然存在
-    const currentUser = await User.findById(decoded.id).select('-password');
+    const currentUser = await User.findById(decoded.userId).select('-password');
     if (!currentUser) {
       return next(new AppError('该token对应的用户不存在', 401));
     }
@@ -77,7 +77,7 @@ const optionalAuth = async (req, res, next) => {
 
     if (token) {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const currentUser = await User.findById(decoded.id).select('-password');
+      const currentUser = await User.findById(decoded.userId).select('-password');
       if (currentUser && currentUser.isActive && currentUser.isEmailVerified) {
         req.user = currentUser;
       }

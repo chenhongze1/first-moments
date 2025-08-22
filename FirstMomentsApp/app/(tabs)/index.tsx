@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { spacing } from '../../src/styles';
 import { 
@@ -30,13 +31,23 @@ const HomeScreen = () => {
   const { theme } = useTheme();
   const colors = theme.colors;
   const responsiveUtils = useResponsive();
+  const router = useRouter();
   const styles = createStyles(colors, responsiveUtils);
+  
   const quickActions = [
-    { id: 1, title: '拍照记录', icon: 'camera', color: colors.primary },
-    { id: 2, title: '地点打卡', icon: 'location', color: colors.secondary },
-    { id: 3, title: '心情记录', icon: 'happy', color: colors.error },
-    { id: 4, title: '成就查看', icon: 'trophy', color: '#FF9500' },
+    { id: 1, title: '创建记录', icon: 'add-circle', color: colors.primary, route: '/moments' },
+    { id: 2, title: '地图打卡', icon: 'location', color: colors.secondary, route: '/map' },
+    { id: 3, title: '浏览记录', icon: 'list', color: colors.error, route: '/moments' },
+    { id: 4, title: '统计分析', icon: 'stats-chart', color: '#FF9500', route: '/achievements' },
   ];
+
+  const handleQuickAction = (action: any) => {
+    try {
+      router.push(action.route);
+    } catch (error) {
+      Alert.alert('导航错误', `无法打开${action.title}页面`);
+    }
+  };
 
   const recentMoments = [
     {
@@ -103,7 +114,7 @@ const HomeScreen = () => {
             <View style={styles.quickActionsGrid}>
               {quickActions.map((action, index) => (
                 <FadeInView key={action.id} delay={400 + index * 100}>
-                  <AnimatedButton onPress={() => Alert.alert('功能提示', `${action.title}功能开发中...`)}>
+                  <AnimatedButton onPress={() => handleQuickAction(action)}>
                     <View style={styles.quickActionItem}>
                       <View style={[styles.quickActionIcon, { backgroundColor: action.color }]}>
                          <PulseView>

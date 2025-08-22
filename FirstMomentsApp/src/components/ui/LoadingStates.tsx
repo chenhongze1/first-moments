@@ -73,8 +73,9 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
     <Animated.View
       style={[
         styles.overlay,
-        { backgroundColor, opacity: fadeAnim, pointerEvents: 'auto' },
+        { backgroundColor, opacity: fadeAnim },
       ]}
+      pointerEvents="auto"
     >
       <View style={styles.overlayContent}>
         <ActivityIndicator size="large" color="#fff" />

@@ -7,10 +7,12 @@ import {
   TouchableOpacity,
   Image,
   StyleSheet,
-  Alert,
   KeyboardAvoidingView,
   Platform,
-  Dimensions
+  Dimensions,
+  ViewStyle,
+  TextStyle,
+  ImageStyle
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,6 +21,7 @@ import * as Location from 'expo-location';
 import { RootState } from '../../store';
 import { createMomentAsync, updateMomentAsync } from '../../store/slices/momentSlice';
 import { LoadingIndicator } from '../../components/ui/LoadingStates';
+import { useErrorHandler } from '../../hooks/useErrorHandler';
 import { colors, fontSize, fontWeight, spacing, borderRadius } from '../../styles';
 import { CreateMomentData, UpdateMomentData, Moment } from '../../services/momentAPI';
 
@@ -38,6 +41,7 @@ const CreateMomentScreen: React.FC<CreateMomentScreenProps> = ({ route, navigati
   const { moment: editMoment, isEdit = false } = route.params || {};
   const dispatch = useDispatch();
   const { isLoading } = useSelector((state: RootState) => state.moment);
+  const { handleError, showSuccess, showWarning, showInfo } = useErrorHandler();
   
   const [content, setContent] = useState(editMoment?.content || '');
   const [selectedImages, setSelectedImages] = useState<string[]>(editMoment?.media?.map(m => m.url) || []);
@@ -70,7 +74,7 @@ const CreateMomentScreen: React.FC<CreateMomentScreenProps> = ({ route, navigati
     (async () => {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('权限不足', '需要访问相册权限来选择图片');
+        showWarning('需要访问相册权限来选择图片');
       }
     })();
   }, []);
@@ -89,7 +93,10 @@ const CreateMomentScreen: React.FC<CreateMomentScreenProps> = ({ route, navigati
         setSelectedImages(prev => [...prev, ...newImages].slice(0, 9)); // 最多9张图片
       }
     } catch (error) {
-      Alert.alert('错误', '选择图片失败');
+      handleError(error, {
+        showToast: true,
+        showAlert: false
+      });
     }
   };
 
@@ -114,7 +121,7 @@ const CreateMomentScreen: React.FC<CreateMomentScreenProps> = ({ route, navigati
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('权限不足', '需要位置权限来获取当前位置');
+        showWarning('需要位置权限来获取当前位置');
         return;
       }
 
@@ -145,7 +152,10 @@ const CreateMomentScreen: React.FC<CreateMomentScreenProps> = ({ route, navigati
         });
       }
     } catch (error) {
-      Alert.alert('错误', '获取位置失败');
+      handleError(error, {
+        showToast: true,
+        showAlert: false
+      });
     } finally {
       setIsLoadingLocation(false);
     }
@@ -153,7 +163,7 @@ const CreateMomentScreen: React.FC<CreateMomentScreenProps> = ({ route, navigati
 
   const handleSubmit = async () => {
     if (!content.trim()) {
-      Alert.alert('提示', '请输入时光记录内容');
+      showWarning('请输入时光记录内容');
       return;
     }
 
@@ -163,16 +173,15 @@ const CreateMomentScreen: React.FC<CreateMomentScreenProps> = ({ route, navigati
           content: content.trim(),
           tags,
           mood,
-          location,
+          location: location || undefined,
           privacy
         };
         await dispatch(updateMomentAsync({
           id: editMoment.id,
           data: updateData
         }) as any);
-        Alert.alert('成功', '时光记录已更新', [
-          { text: '确定', onPress: () => navigation.goBack() }
-        ]);
+        showSuccess('时光记录已更新');
+        navigation.goBack();
       } else {
         const createData: CreateMomentData = {
           title: content.trim().substring(0, 50) || '时光记录',
@@ -180,18 +189,20 @@ const CreateMomentScreen: React.FC<CreateMomentScreenProps> = ({ route, navigati
           profileId: 'default-profile', // 需要从用户状态获取
           tags,
           mood,
-          location,
+          location: location || undefined,
           privacy
         };
         await dispatch(createMomentAsync({
           data: createData
         }) as any);
-        Alert.alert('成功', '时光记录已创建', [
-          { text: '确定', onPress: () => navigation.goBack() }
-        ]);
+        showSuccess('时光记录已创建');
+        navigation.goBack();
       }
     } catch (error) {
-      Alert.alert('错误', isEdit ? '更新失败' : '创建失败');
+      handleError(error, {
+        showAlert: true,
+        showToast: false
+      });
     }
   };
 
@@ -200,7 +211,11 @@ const CreateMomentScreen: React.FC<CreateMomentScreenProps> = ({ route, navigati
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.scrollView} 
+        contentContainerStyle={styles.scrollViewContent}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Content Input */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>记录内容</Text>
@@ -389,13 +404,60 @@ const CreateMomentScreen: React.FC<CreateMomentScreenProps> = ({ route, navigati
   );
 };
 
-const styles = StyleSheet.create({
+interface Styles {
+  container: ViewStyle;
+  scrollView: ViewStyle;
+  scrollViewContent: ViewStyle;
+  section: ViewStyle;
+  sectionHeader: ViewStyle;
+  sectionTitle: TextStyle;
+  contentInput: TextStyle;
+  characterCount: TextStyle;
+  imagesContainer: ViewStyle;
+  imageWrapper: ViewStyle;
+  selectedImage: ImageStyle;
+  removeImageButton: ViewStyle;
+  addImageButton: ViewStyle;
+  addImageText: TextStyle;
+  tagInputContainer: ViewStyle;
+  tagInput: TextStyle;
+  addTagButton: ViewStyle;
+  addTagButtonDisabled: ViewStyle;
+  tagsContainer: ViewStyle;
+  tag: ViewStyle;
+  tagText: TextStyle;
+  moodsContainer: ViewStyle;
+  moodButton: ViewStyle;
+  selectedMoodButton: ViewStyle;
+  moodEmoji: TextStyle;
+  moodLabel: TextStyle;
+  selectedMoodLabel: TextStyle;
+  locationButton: ViewStyle;
+  locationButtonText: TextStyle;
+  locationInfo: ViewStyle;
+  locationText: TextStyle;
+  privacyContainer: ViewStyle;
+  privacyButton: ViewStyle;
+  selectedPrivacyButton: ViewStyle;
+  privacyLabel: TextStyle;
+  selectedPrivacyLabel: TextStyle;
+  submitContainer: ViewStyle;
+  submitButton: ViewStyle;
+  submitButtonDisabled: ViewStyle;
+  submitButtonText: TextStyle;
+}
+
+const styles = StyleSheet.create<Styles>({
   container: {
     flex: 1,
     backgroundColor: colors.background
   },
   scrollView: {
     flex: 1
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+    paddingBottom: spacing.md
   },
   section: {
     padding: spacing.md,
@@ -595,7 +657,9 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     backgroundColor: colors.white,
     borderTopWidth: 1,
-    borderTopColor: colors.gray200
+    borderTopColor: colors.gray200,
+    marginTop: 'auto' as any, // 推到底部
+    flexShrink: 0 // 防止被压缩
   },
   submitButton: {
     backgroundColor: colors.primary,

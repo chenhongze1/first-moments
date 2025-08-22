@@ -44,13 +44,39 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// 健康检查
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime()
+// CORS测试端点（不需要认证）
+app.post('/api/test-cors', (req, res) => {
+  res.json({
+    success: true,
+    message: 'CORS配置正常',
+    data: req.body,
+    timestamp: new Date().toISOString()
   });
+});
+
+// 健康检查
+app.get('/health', async (req, res) => {
+  try {
+    const { healthCheck } = require('./config/database');
+    const dbHealth = await healthCheck();
+    
+    res.status(200).json({
+      status: 'OK',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      database: dbHealth
+    });
+  } catch (error) {
+    res.status(503).json({
+      status: 'ERROR',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      database: {
+        status: 'unhealthy',
+        message: error.message
+      }
+    });
+  }
 });
 
 // API文档路由

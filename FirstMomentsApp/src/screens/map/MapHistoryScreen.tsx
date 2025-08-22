@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
   TouchableOpacity,
   Image,
   SafeAreaView,
@@ -15,6 +14,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { responsive } from '../../utils/responsive';
 import { spacing } from '../../styles';
 import { FadeInView, SlideInView } from '../../components/animations/AnimatedComponents';
+import { OptimizedFlatList } from '../../components/VirtualizedList';
 
 interface CheckInRecord {
   id: string;
@@ -283,22 +283,23 @@ const MapHistoryScreen: React.FC<MapHistoryScreenProps> = ({ navigation }) => {
         </View>
 
         {/* 记录列表 */}
-        <FlatList
+        <OptimizedFlatList
           data={records}
           renderItem={renderRecord}
           keyExtractor={(item) => item.id}
+          config={{
+            itemHeight: 120, // 估算每个记录卡片的高度
+            windowSize: 8,
+            initialNumToRender: 6,
+            maxToRenderPerBatch: 4,
+            updateCellsBatchingPeriod: 50,
+            removeClippedSubviews: true,
+          }}
           style={styles.list}
           contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              colors={[colors.primary]}
-              tintColor={colors.primary}
-            />
-          }
-          ListEmptyComponent={renderEmptyState}
+          onRefresh={onRefresh}
+          refreshing={refreshing}
+          emptyComponent={renderEmptyState()}
         />
       </FadeInView>
     </SafeAreaView>

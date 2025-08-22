@@ -236,7 +236,6 @@ export const NotificationBadge: React.FC<Omit<BadgeProps, 'variant'> & { count: 
 const styles = StyleSheet.create({
   wrapper: {
     position: 'relative',
-    display: 'inline-flex',
   },
   badge: {
     alignItems: 'center',

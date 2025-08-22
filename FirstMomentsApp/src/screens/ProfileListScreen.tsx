@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
-  FlatList,
   TouchableOpacity,
   StyleSheet,
   Alert,
@@ -13,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import { fetchProfilesAsync, deleteProfileAsync, setCurrentProfile } from '../store/slices/profileSlice';
+import { OptimizedFlatList } from '../components/VirtualizedList';
 import { colors, spacing, fontSize, fontWeight } from '../styles';
 
 interface Profile {
@@ -164,15 +164,21 @@ export const ProfileListScreen: React.FC<ProfileListScreenProps> = ({ navigation
       {profiles.length === 0 && !isLoading ? (
         renderEmptyState()
       ) : (
-        <FlatList
+        <OptimizedFlatList
           data={profiles}
           renderItem={renderProfileItem}
           keyExtractor={(item) => item.id}
+          config={{
+            itemHeight: 100,
+            windowSize: 8,
+            initialNumToRender: 6,
+            maxToRenderPerBatch: 4,
+            updateCellsBatchingPeriod: 50,
+            removeClippedSubviews: true,
+          }}
           contentContainerStyle={styles.listContainer}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-          showsVerticalScrollIndicator={false}
+          onRefresh={onRefresh}
+          refreshing={refreshing}
         />
       )}
     </View>

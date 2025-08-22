@@ -384,10 +384,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderRadius: borderRadius.md,
     marginHorizontal: spacing.xs,
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.1)',
     elevation: 2,
   } as ViewStyle,
   underlineTab: {
@@ -413,10 +410,7 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.xs,
     borderWidth: 1,
     borderColor: colors.primary,
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
     elevation: 3,
   } as ViewStyle,
   buttonTab: {

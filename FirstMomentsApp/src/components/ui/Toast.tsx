@@ -49,7 +49,7 @@ export const Toast: React.FC<ToastProps> = ({
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(getInitialSlideValue(position))).current;
   const [isVisible, setIsVisible] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function getInitialSlideValue(pos: ToastPosition): number {
     switch (pos) {
@@ -360,7 +360,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     alignItems: 'center',
     zIndex: 9999,
-    pointerEvents: 'box-none',
   },
   toast: {
     marginHorizontal: spacing.md,
@@ -369,14 +368,14 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     maxWidth: screenWidth - spacing.md * 2,
     minWidth: 200,
-    shadowColor: colors.black,
+    elevation: 5,
+    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
     },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    elevation: 5,
   },
   content: {
     flexDirection: 'row',

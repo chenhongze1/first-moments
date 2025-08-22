@@ -129,13 +129,7 @@ const styles = StyleSheet.create({
   
   inputContainerFocused: {
     borderColor: colors.primary,
-    shadowColor: colors.primary,
-    shadowOffset: {
-      width: 0,
-      height: 0,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    boxShadow: '0px 2px 4px rgba(99, 102, 241, 0.2)',
     elevation: 2,
   },
   

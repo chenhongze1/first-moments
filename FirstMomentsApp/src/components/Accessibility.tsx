@@ -357,7 +357,7 @@ export const AccessibilityUtils = {
 
   // 构建复合标签
   buildCompoundLabel: (parts: (string | undefined)[]): string => {
-    return parts.filter(Boolean).join(', ');
+    return parts.filter((part): part is string => Boolean(part)).join(', ');
   },
 };
 

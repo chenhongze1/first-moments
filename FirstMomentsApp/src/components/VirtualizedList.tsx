@@ -13,6 +13,7 @@ import {
 import { colors, spacing } from '../styles';
 import { memoryManager, MemoryOptimizer, useMemoryOptimization } from '../utils/memoryManager';
 import { useRenderPerformance, useMemoryLeakDetection } from './ui/PerformanceMonitor';
+import { performanceMonitor, usePerformanceMonitor } from '../utils/performanceMonitor';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -71,6 +72,7 @@ export function OptimizedFlatList<T>({
   const { getStats } = useRenderPerformance('OptimizedFlatList');
   const { addListener, safeSetTimeout } = useMemoryLeakDetection('OptimizedFlatList');
   const { addCleanup, setCache, getCache } = useMemoryOptimization();
+  const { startRender, endRender } = usePerformanceMonitor('OptimizedFlatList');
 
   // 缓存渲染项
   const itemCache = useRef<Map<string, React.ReactElement>>(new Map());
@@ -196,8 +198,13 @@ export function OptimizedFlatList<T>({
     ({ item, index }: { item: T; index: number }) => {
       const key = keyExtractor(item, index);
       
+      // 性能监控
+      const itemMonitor = performanceMonitor.monitorRender(`ListItem_${key}`);
+      itemMonitor.onRenderStart();
+      
       // 检查缓存
       if (itemCache.current.has(key)) {
+        itemMonitor.onRenderEnd();
         return itemCache.current.get(key)!;
       }
       
@@ -213,6 +220,7 @@ export function OptimizedFlatList<T>({
         itemCache.current.set(key, renderedItem);
       }
       
+      itemMonitor.onRenderEnd();
       return renderedItem;
     },
     [renderItem, keyExtractor]
@@ -224,6 +232,14 @@ export function OptimizedFlatList<T>({
       itemCache.current.clear();
     });
   }, [addCleanup]);
+
+  // 性能监控生命周期
+  useEffect(() => {
+    startRender();
+    return () => {
+      endRender();
+    };
+  }, [startRender, endRender]);
 
   // 内存警告监听
   useEffect(() => {

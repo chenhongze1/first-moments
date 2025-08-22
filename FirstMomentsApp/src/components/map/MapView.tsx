@@ -102,7 +102,7 @@ const WebMapView: React.FC<MapViewComponentProps> = ({
   return (
     <View style={[styles.container, style]}>
       <View style={[styles.webMapPlaceholder, { backgroundColor: theme.colors.surface }]} onTouchEnd={handleMapClick}>
-        <Text style={[styles.webMapText, { color: theme.colors.text }]}>地图视图 (Web)</Text>
+        <Text style={[styles.webMapText, { color: theme.colors.textPrimary }]}>地图视图 (Web)</Text>
         {currentLocation && (
           <Text style={[styles.locationText, { color: theme.colors.textPrimary }]}>
             当前位置: {currentLocation.latitude.toFixed(4)}, {currentLocation.longitude.toFixed(4)}

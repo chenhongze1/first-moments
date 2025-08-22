@@ -256,8 +256,8 @@ export const useRenderPerformance = (componentName: string) => {
 // 内存泄漏检测Hook
 export const useMemoryLeakDetection = (componentName: string) => {
   const mountTime = useRef<number>(Date.now());
-  const timers = useRef<Set<NodeJS.Timeout>>(new Set());
-  const intervals = useRef<Set<NodeJS.Timeout>>(new Set());
+  const timers = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+  const intervals = useRef<Set<ReturnType<typeof setInterval>>>(new Set());
   const listeners = useRef<Set<() => void>>(new Set());
 
   // 包装setTimeout

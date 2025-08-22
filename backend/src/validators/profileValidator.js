@@ -17,7 +17,7 @@ const createProfileValidation = [
   
   body('type')
     .optional()
-    .isIn(['personal', 'shared', 'family', 'work', 'travel', 'hobby'])
+    .isIn(['baby', 'pet', 'travel', 'hobby', 'other'])
     .withMessage('档案类型无效'),
   
   body('privacy')
@@ -161,7 +161,7 @@ const getProfilesValidation = [
   
   query('type')
     .optional()
-    .isIn(['personal', 'shared', 'family', 'work', 'travel', 'hobby'])
+    .isIn(['baby', 'pet', 'travel', 'hobby', 'other'])
     .withMessage('档案类型无效'),
   
   query('privacy')

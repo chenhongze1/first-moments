@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -12,6 +11,7 @@ import { loginAsync } from '../store/slices/authSlice';
 import { Screen } from '../components/Screen';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
+import { useErrorHandler } from '../hooks/useErrorHandler';
 import { colors, fontSize, fontWeight, spacing, textStyles } from '../styles';
 
 export const LoginScreen: React.FC = () => {
@@ -22,6 +22,7 @@ export const LoginScreen: React.FC = () => {
 
   const dispatch = useAppDispatch();
   const { isLoading, error } = useAppSelector(state => state.auth);
+  const { handleError, showSuccess, showInfo } = useErrorHandler();
 
   const validateForm = () => {
     let isValid = true;
@@ -58,21 +59,25 @@ export const LoginScreen: React.FC = () => {
 
     try {
       await dispatch(loginAsync({ email, password })).unwrap();
+      showSuccess('登录成功，欢迎回来！');
       // 登录成功，导航将由Redux状态变化自动处理
     } catch (err: any) {
-      Alert.alert('登录失败', err.message || '登录过程中发生错误');
+      handleError(err, {
+        showAlert: true,
+        showToast: false
+      });
     }
   };
 
   const handleRegister = () => {
     // 导航到注册页面
     // navigation.navigate('Register');
-    Alert.alert('提示', '注册功能即将开放');
+    showInfo('注册功能即将开放');
   };
 
   const handleForgotPassword = () => {
     // 导航到忘记密码页面
-    Alert.alert('提示', '忘记密码功能即将开放');
+    showInfo('忘记密码功能即将开放');
   };
 
   return (

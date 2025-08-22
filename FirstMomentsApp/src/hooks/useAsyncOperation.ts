@@ -32,7 +32,7 @@ export const useAsyncOperation = <T = any>(
   });
 
   const retryCountRef = useRef(0);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 清理定时器
   useEffect(() => {

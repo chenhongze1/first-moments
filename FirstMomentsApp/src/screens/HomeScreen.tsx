@@ -5,21 +5,33 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { CompositeNavigationProp } from '@react-navigation/native';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { fetchProfilesAsync } from '../store/slices/profileSlice';
 import { fetchUserAchievementsAsync } from '../store/slices/achievementSlice';
 import { Screen } from '../components/Screen';
 import { Button } from '../components/Button';
 import I18nDemo from '../components/ui/I18nDemo';
+import { useErrorHandler } from '../hooks/useErrorHandler';
 import { colors, fontSize, fontWeight, spacing, textStyles } from '../styles';
+import { MainTabParamList, RootStackParamList } from '../navigation/AppNavigator';
+
+type HomeScreenNavigationProp = CompositeNavigationProp<
+  BottomTabNavigationProp<MainTabParamList, 'Home'>,
+  NativeStackNavigationProp<RootStackParamList>
+>;
 
 export const HomeScreen: React.FC = () => {
+  const navigation = useNavigation<HomeScreenNavigationProp>();
   const dispatch = useAppDispatch();
   const { user } = useAppSelector(state => state.auth);
   const { profiles, isLoading: profilesLoading } = useAppSelector(state => state.profile);
   const { userAchievements, isLoading: achievementsLoading } = useAppSelector(state => state.achievement);
+  const { showInfo } = useErrorHandler();
 
   useEffect(() => {
     // 加载用户档案和成就
@@ -28,20 +40,35 @@ export const HomeScreen: React.FC = () => {
   }, [dispatch]);
 
   const handleCreateRecord = () => {
-    Alert.alert('提示', '创建记录功能即将开放');
+    navigation.navigate('Records', {
+      screen: 'CreateMoment',
+      params: { isEdit: false }
+    });
   };
 
   const handleViewMap = () => {
-    Alert.alert('提示', '地图功能即将开放');
+    navigation.navigate('Map');
   };
 
   const handleViewAchievements = () => {
-    Alert.alert('提示', '成就详情功能即将开放');
+    navigation.navigate('Achievements');
   };
 
   const handleViewProfile = () => {
-    Alert.alert('提示', '档案详情功能即将开放');
+    navigation.navigate('Profile');
   };
+
+  const handleViewRecords = () => {
+    navigation.navigate('Records', {
+      screen: 'MomentList'
+    });
+  };
+
+  const handleViewStats = () => {
+    navigation.navigate('Stats');
+  };
+
+
 
   const defaultProfile = profiles.find(p => p.isDefault);
   const recentAchievements = userAchievements.slice(0, 3);
@@ -60,23 +87,45 @@ export const HomeScreen: React.FC = () => {
         </View>
 
         {/* 快速操作 */}
-        <View style={styles.quickActions}>
-          <TouchableOpacity style={styles.actionCard} onPress={handleCreateRecord}>
-            <View style={styles.actionIcon}>
-              <Text style={styles.actionIconText}>📝</Text>
-            </View>
-            <Text style={styles.actionTitle}>创建记录</Text>
-            <Text style={styles.actionSubtitle}>记录此刻的美好</Text>
-          </TouchableOpacity>
+        <View style={styles.quickActionsContainer}>
+          <View style={styles.quickActions}>
+            <TouchableOpacity style={styles.actionCard} onPress={handleCreateRecord}>
+              <View style={styles.actionIcon}>
+                <Text style={styles.actionIconText}>📝</Text>
+              </View>
+              <Text style={styles.actionTitle}>创建记录</Text>
+              <Text style={styles.actionSubtitle}>记录此刻的美好</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionCard} onPress={handleViewMap}>
-            <View style={styles.actionIcon}>
-              <Text style={styles.actionIconText}>🗺️</Text>
-            </View>
-            <Text style={styles.actionTitle}>地图打卡</Text>
-            <Text style={styles.actionSubtitle}>探索周边位置</Text>
-          </TouchableOpacity>
+            <TouchableOpacity style={styles.actionCard} onPress={handleViewMap}>
+              <View style={styles.actionIcon}>
+                <Text style={styles.actionIconText}>🗺️</Text>
+              </View>
+              <Text style={styles.actionTitle}>地图打卡</Text>
+              <Text style={styles.actionSubtitle}>探索周边位置</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.quickActions}>
+            <TouchableOpacity style={styles.actionCard} onPress={handleViewRecords}>
+              <View style={styles.actionIcon}>
+                <Text style={styles.actionIconText}>📚</Text>
+              </View>
+              <Text style={styles.actionTitle}>浏览记录</Text>
+              <Text style={styles.actionSubtitle}>查看历史记录</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.actionCard} onPress={handleViewStats}>
+              <View style={styles.actionIcon}>
+                <Text style={styles.actionIconText}>📊</Text>
+              </View>
+              <Text style={styles.actionTitle}>统计分析</Text>
+              <Text style={styles.actionSubtitle}>数据趋势分析</Text>
+            </TouchableOpacity>
+          </View>
         </View>
+
+
 
         {/* 当前档案 */}
         {defaultProfile && (
@@ -160,6 +209,8 @@ export const HomeScreen: React.FC = () => {
           <I18nDemo />
         </View>
       </View>
+
+
     </Screen>
   );
 };
@@ -185,10 +236,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
+  quickActionsContainer: {
+    marginBottom: spacing.xl,
+  },
+
   quickActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: spacing.xl,
+    marginBottom: spacing.md,
   },
 
   actionCard: {
@@ -361,4 +416,6 @@ const styles = StyleSheet.create({
     ...textStyles.body,
     color: colors.warning,
   },
+
+
 });

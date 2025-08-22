@@ -53,7 +53,7 @@ const mockUser: UserProfile = {
   id: '1',
   username: '时光记录者',
   email: 'user@firstmoments.com',
-  avatar: 'https://via.placeholder.com/120x120/4ECDC4/FFFFFF?text=头像',
+  avatar: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDEyMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxjaXJjbGUgY3g9IjYwIiBjeT0iNjAiIHI9IjYwIiBmaWxsPSIjNEVDREE0Ii8+Cjx0ZXh0IHg9IjYwIiB5PSI3MCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+5aS05YOP</dGV4dD4KPHN2Zz4=',
   bio: '记录生活中的美好时光，分享每一个珍贵瞬间',
   joinDate: new Date('2024-01-15'),
   stats: {
@@ -159,6 +159,73 @@ export default function ProfileScreen() {
       ],
     },
     {
+      title: '数据与存储',
+      items: [
+        {
+          id: 'backup',
+          title: '数据备份',
+          subtitle: '备份您的记录数据',
+          icon: 'cloud-upload-outline',
+          type: 'navigation' as const,
+          onPress: () => Alert.alert('数据备份', '功能开发中...'),
+        },
+        {
+          id: 'sync',
+          title: '云端同步',
+          subtitle: '同步数据到云端',
+          icon: 'sync-outline',
+          type: 'switch' as const,
+          value: true,
+          onToggle: () => {},
+        },
+        {
+          id: 'storage',
+          title: '存储管理',
+          subtitle: '管理本地存储空间',
+          icon: 'folder-outline',
+          type: 'navigation' as const,
+          onPress: () => Alert.alert('存储管理', '功能开发中...'),
+        },
+        {
+          id: 'export',
+          title: '导出数据',
+          subtitle: '导出记录为文件',
+          icon: 'download-outline',
+          type: 'navigation' as const,
+          onPress: () => Alert.alert('导出数据', '功能开发中...'),
+        },
+      ],
+    },
+    {
+      title: '社交与分享',
+      items: [
+        {
+          id: 'friends',
+          title: '好友管理',
+          subtitle: '管理您的好友列表',
+          icon: 'people-outline',
+          type: 'navigation' as const,
+          onPress: () => Alert.alert('好友管理', '功能开发中...'),
+        },
+        {
+          id: 'share_settings',
+          title: '分享设置',
+          subtitle: '设置默认分享选项',
+          icon: 'share-outline',
+          type: 'navigation' as const,
+          onPress: () => Alert.alert('分享设置', '功能开发中...'),
+        },
+        {
+          id: 'social_connect',
+          title: '社交账号绑定',
+          subtitle: '绑定微信、微博等账号',
+          icon: 'link-outline',
+          type: 'navigation' as const,
+          onPress: () => Alert.alert('社交账号绑定', '功能开发中...'),
+        },
+      ],
+    },
+    {
       title: '其他',
       items: [
         {
@@ -176,6 +243,30 @@ export default function ProfileScreen() {
           icon: 'information-circle-outline',
           type: 'navigation' as const,
           onPress: () => Alert.alert('关于我们', 'First Moments v1.0.0\n记录生活中的美好时光'),
+        },
+        {
+          id: 'terms',
+          title: '服务条款',
+          subtitle: '查看服务条款',
+          icon: 'document-text-outline',
+          type: 'navigation' as const,
+          onPress: () => Alert.alert('服务条款', '功能开发中...'),
+        },
+        {
+          id: 'privacy',
+          title: '隐私政策',
+          subtitle: '查看隐私政策',
+          icon: 'shield-outline',
+          type: 'navigation' as const,
+          onPress: () => Alert.alert('隐私政策', '功能开发中...'),
+        },
+        {
+          id: 'version',
+          title: '版本信息',
+          subtitle: 'v1.0.0 (Build 1)',
+          icon: 'information-outline',
+          type: 'navigation' as const,
+          onPress: () => Alert.alert('版本信息', '当前版本：v1.0.0\n构建号：1\n发布日期：2024-01-15'),
         },
         {
           id: 'logout',
@@ -260,12 +351,12 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <FadeInView>
-        <ScrollView 
-          style={styles.content}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
+      <ScrollView 
+        style={styles.content}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <FadeInView>
         {/* 用户信息卡片 */}
         <SlideInView direction="up" delay={100}>
           <LinearGradient
@@ -315,8 +406,8 @@ export default function ProfileScreen() {
         ))}
         
         <View style={styles.bottomPadding} />
-        </ScrollView>
-      </FadeInView>
+        </FadeInView>
+      </ScrollView>
     </SafeAreaView>
   );
 }

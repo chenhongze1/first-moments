@@ -81,6 +81,78 @@ const MapScreen = () => {
       category: '景点',
       checkInCount: 654,
     },
+    {
+      id: 5,
+      name: '北京大学',
+      address: '北京市海淀区颐和园路5号',
+      latitude: 39.9990,
+      longitude: 116.3059,
+      category: '学校',
+      checkInCount: 432,
+    },
+    {
+      id: 6,
+      name: '清华大学',
+      address: '北京市海淀区清华园1号',
+      latitude: 40.0031,
+      longitude: 116.3262,
+      category: '学校',
+      checkInCount: 521,
+    },
+    {
+      id: 7,
+      name: '鸟巢',
+      address: '北京市朝阳区国家体育场南路1号',
+      latitude: 39.9928,
+      longitude: 116.3975,
+      category: '体育场馆',
+      checkInCount: 789,
+    },
+    {
+      id: 8,
+      name: '水立方',
+      address: '北京市朝阳区天辰东路11号',
+      latitude: 39.9934,
+      longitude: 116.3890,
+      category: '体育场馆',
+      checkInCount: 456,
+    },
+    {
+      id: 9,
+      name: '王府井大街',
+      address: '北京市东城区王府井大街',
+      latitude: 39.9097,
+      longitude: 116.4180,
+      category: '商业街',
+      checkInCount: 678,
+    },
+    {
+      id: 10,
+      name: '什刹海',
+      address: '北京市西城区什刹海',
+      latitude: 39.9389,
+      longitude: 116.3831,
+      category: '景点',
+      checkInCount: 345,
+    },
+    {
+      id: 11,
+      name: '南锣鼓巷',
+      address: '北京市东城区南锣鼓巷',
+      latitude: 39.9361,
+      longitude: 116.4014,
+      category: '胡同',
+      checkInCount: 567,
+    },
+    {
+      id: 12,
+      name: '798艺术区',
+      address: '北京市朝阳区酒仙桥路4号',
+      latitude: 39.9842,
+      longitude: 116.4951,
+      category: '艺术区',
+      checkInCount: 234,
+    },
   ];
 
   useEffect(() => {
@@ -167,8 +239,8 @@ const MapScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* 头部 */}
       <FadeInView>
-        {/* 头部 */}
         <LinearGradient
           colors={[colors.primary, colors.secondary]}
           style={styles.header}
@@ -176,6 +248,7 @@ const MapScreen = () => {
           <Text style={styles.headerTitle}>地图打卡</Text>
           <Text style={styles.headerSubtitle}>发现身边的精彩地点</Text>
         </LinearGradient>
+      </FadeInView>
 
       <ScrollView 
         style={styles.content} 
@@ -320,7 +393,6 @@ const MapScreen = () => {
         onClose={() => setShowCheckInModal(false)}
         onCheckIn={handleCheckIn}
       />
-      </FadeInView>
     </SafeAreaView>
   );
 };
@@ -347,10 +419,10 @@ const createStyles = (colors: any, responsiveUtils: any) => StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: spacing.lg,
   },
   scrollContent: {
-    flexGrow: 1,
+    padding: spacing.lg,
+    paddingBottom: spacing.xl * 2,
   },
   searchContainer: {
     flexDirection: 'row',

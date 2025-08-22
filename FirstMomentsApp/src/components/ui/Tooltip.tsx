@@ -84,7 +84,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
   const [internalVisible, setInternalVisible] = useState(defaultVisible);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const triggerRef = useRef<View>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isVisible = visible !== undefined ? visible : internalVisible;
 

@@ -7,7 +7,7 @@ class MemoryManager {
   private cacheTimestamps: Map<string, number> = new Map();
   private maxCacheSize: number = 50; // 最大缓存项数
   private maxCacheAge: number = 5 * 60 * 1000; // 5分钟缓存过期时间
-  private cleanupInterval: NodeJS.Timeout | null = null;
+  private cleanupInterval: ReturnType<typeof setInterval> | null = null;
   private memoryWarningListeners: Set<() => void> = new Set();
 
   private constructor() {
@@ -222,7 +222,7 @@ export class MemoryOptimizer {
     func: T,
     wait: number
   ): (...args: Parameters<T>) => void {
-    let timeout: NodeJS.Timeout | null = null;
+    let timeout: ReturnType<typeof setTimeout> | null = null;
     
     return (...args: Parameters<T>) => {
       if (timeout) {

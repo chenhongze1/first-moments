@@ -149,13 +149,27 @@ export const getMoments = async (params?: GetMomentsParams): Promise<ApiResponse
     });
   }
   
-  const response = await httpClient.get(`/moments?${queryParams.toString()}`);
+  // 为列表请求启用缓存，缓存时间2分钟
+  const response = await httpClient.get(`/moments?${queryParams.toString()}`, {
+    cache: {
+      enabled: true,
+      ttl: 2 * 60 * 1000, // 2分钟缓存
+      key: `moments_list_${queryParams.toString()}`
+    }
+  });
   return response.data;
 };
 
 // 获取指定时光记录
 export const getMoment = async (id: string): Promise<ApiResponse<{ moment: Moment }>> => {
-  const response = await httpClient.get(`/moments/${id}`);
+  // 为详情请求启用缓存，缓存时间5分钟
+  const response = await httpClient.get(`/moments/${id}`, {
+    cache: {
+      enabled: true,
+      ttl: 5 * 60 * 1000, // 5分钟缓存
+      key: `moment_detail_${id}`
+    }
+  });
   return response.data;
 };
 
@@ -194,30 +208,54 @@ export const createMoment = async (data: CreateMomentData, files?: File[]): Prom
 // 更新时光记录
 export const updateMoment = async (id: string, data: UpdateMomentData): Promise<ApiResponse<{ moment: Moment }>> => {
   const response = await httpClient.put(`/moments/${id}`, data);
+  
+  // 更新后清除相关缓存
+  httpClient.clearCache(`moment_detail_${id}`);
+  // 清除列表缓存（因为列表中的数据可能已过期）
+  httpClient.clearCache(); // 清除所有缓存，简化处理
+  
   return response.data;
 };
 
 // 删除时光记录
 export const deleteMoment = async (id: string): Promise<ApiResponse<{}>> => {
   const response = await httpClient.delete(`/moments/${id}`);
+  
+  // 删除后清除相关缓存
+  httpClient.clearCache(`moment_detail_${id}`);
+  // 清除列表缓存
+  httpClient.clearCache();
+  
   return response.data;
 };
 
 // 点赞/取消点赞
 export const toggleLike = async (id: string): Promise<ApiResponse<{ moment: Moment }>> => {
   const response = await httpClient.post(`/moments/${id}/like`);
+  
+  // 点赞后清除详情缓存（点赞数变化）
+  httpClient.clearCache(`moment_detail_${id}`);
+  
   return response.data;
 };
 
 // 添加评论
 export const addComment = async (id: string, content: string): Promise<ApiResponse<{ moment: Moment }>> => {
   const response = await httpClient.post(`/moments/${id}/comments`, { content });
+  
+  // 添加评论后清除详情缓存（评论数变化）
+  httpClient.clearCache(`moment_detail_${id}`);
+  
   return response.data;
 };
 
 // 删除评论
 export const deleteComment = async (momentId: string, commentId: string): Promise<ApiResponse<{ moment: Moment }>> => {
   const response = await httpClient.delete(`/moments/${momentId}/comments/${commentId}`);
+  
+  // 删除评论后清除详情缓存（评论数变化）
+  httpClient.clearCache(`moment_detail_${momentId}`);
+  
   return response.data;
 };
 

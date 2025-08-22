@@ -71,13 +71,7 @@ export const TabBar: React.FC<TabBarProps> = ({ state, descriptors, navigation }
     });
 
     if (!event.defaultPrevented) {
-      // 如果是创建按钮，可以添加特殊处理
-      if (route.name === 'create') {
-        // 导航到时光记录页面
-        router.push('/moments');
-      } else {
-        navigation.navigate(route.name);
-      }
+      navigation.navigate(route.name);
     }
   };
 
@@ -131,7 +125,6 @@ export const TabBar: React.FC<TabBarProps> = ({ state, descriptors, navigation }
                       size={24}
                       color={isFocused ? colors.primary : colors.gray500}
                     />
-                    {isFocused && <View style={styles.activeIndicator} />}
                   </View>
                   <Text
                     style={[
@@ -186,16 +179,7 @@ const styles = StyleSheet.create({
   activeIconContainer: {
     transform: [{ scale: 1.1 }],
   },
-  activeIndicator: {
-    position: 'absolute',
-    bottom: -6,
-    left: '50%',
-    marginLeft: -2,
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.primary,
-  },
+
   createButton: {
     width: 56,
     height: 56,

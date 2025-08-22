@@ -86,7 +86,7 @@ export const Popover: React.FC<PopoverProps> = ({
   const [internalVisible, setInternalVisible] = useState(defaultVisible);
   const [popoverPosition, setPopoverPosition] = useState({ x: 0, y: 0 });
   const triggerRef = useRef<View>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isVisible = visible !== undefined ? visible : internalVisible;
 

@@ -2,13 +2,12 @@ import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
-  FlatList,
   TouchableOpacity,
-  Image,
-  RefreshControl,
-  Alert,
   StyleSheet,
-  Dimensions
+  RefreshControl,
+  TextInput,
+  Dimensions,
+  Image,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { useFocusEffect } from '@react-navigation/native';
@@ -16,9 +15,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { RootState, AppDispatch } from '../../store';
 import { fetchMomentsAsync } from '../../store/slices/momentSlice';
 import { Moment } from '../../services/momentAPI';
+import { useErrorHandler } from '../../hooks/useErrorHandler';
 import { colors, fontSize, fontWeight, spacing, borderRadius } from '../../styles';
 import { LoadingIndicator } from '../../components/ui/LoadingStates';
 import FloatingActionButton from '../../components/common/FloatingActionButton';
+import { OptimizedFlatList } from '../../components/VirtualizedList';
+import { LazyImage, preloadImages } from '../../components/LazyImage';
 
 const { width } = Dimensions.get('window');
 
@@ -29,8 +31,11 @@ interface MomentListScreenProps {
 const MomentListScreen: React.FC<MomentListScreenProps> = ({ navigation }) => {
   const dispatch = useDispatch<AppDispatch>();
   const { moments, isLoading, error, pagination } = useSelector((state: RootState) => state.moment);
+  const { handleError } = useErrorHandler();
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [searchText, setSearchText] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
 
   // 初始加载数据
   useFocusEffect(
@@ -39,14 +44,34 @@ const MomentListScreen: React.FC<MomentListScreenProps> = ({ navigation }) => {
     }, [])
   );
 
-  const loadMoments = async (page = 1, refresh = false) => {
+  const loadMoments = async (page = 1, refresh = false, search?: string) => {
     try {
       if (refresh) {
         setRefreshing(true);
       }
-      await dispatch(fetchMomentsAsync({ page, limit: 10 })).unwrap();
+      const params: any = { page, limit: 10 };
+      if (search && search.trim()) {
+        params.search = search.trim();
+      }
+      const result = await dispatch(fetchMomentsAsync(params)).unwrap();
+      
+      // 预加载图片
+        if (result && result.moments && result.moments.length > 0) {
+          const imagesToPreload = result.moments
+            .filter((moment: Moment) => moment.media && moment.media.length > 0)
+            .flatMap((moment: Moment) => moment.media!.slice(0, 3).map((media: any) => media.thumbnail || media.url));
+          
+          if (imagesToPreload.length > 0) {
+            preloadImages(imagesToPreload).catch(error => {
+              console.warn('预加载图片失败:', error);
+            });
+          }
+        }
     } catch (error) {
-      Alert.alert('错误', '加载时光记录失败');
+      handleError(error, {
+        showAlert: true,
+        showToast: false
+      });
     } finally {
       setRefreshing(false);
       setLoadingMore(false);
@@ -54,15 +79,43 @@ const MomentListScreen: React.FC<MomentListScreenProps> = ({ navigation }) => {
   };
 
   const handleRefresh = () => {
+    loadMoments(1, true, searchText);
+  };
+
+  const handleSearch = () => {
+    loadMoments(1, true, searchText);
+  };
+
+  const handleClearSearch = () => {
+    setSearchText('');
+    setShowSearch(false);
     loadMoments(1, true);
   };
 
   const handleLoadMore = () => {
     if (!loadingMore && pagination && pagination.current < pagination.pages) {
       setLoadingMore(true);
-      loadMoments(pagination.current + 1);
+      loadMoments(pagination.current + 1, false, searchText);
     }
   };
+
+  // 设置导航栏右侧搜索按钮
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity
+          onPress={() => setShowSearch(!showSearch)}
+          style={{ marginRight: 15 }}
+        >
+          <Ionicons 
+            name={showSearch ? "close-outline" : "search-outline"} 
+            size={24} 
+            color={colors.primary} 
+          />
+        </TouchableOpacity>
+      )
+    });
+  }, [showSearch, navigation]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -113,11 +166,13 @@ const MomentListScreen: React.FC<MomentListScreenProps> = ({ navigation }) => {
       {item.media && item.media.length > 0 && (
         <View style={styles.mediaContainer}>
           {item.media.slice(0, 3).map((media, index) => (
-            <Image
-              key={index}
-              source={{ uri: media.thumbnail || media.url }}
-              style={styles.mediaImage}
-            />
+            <LazyImage
+                key={index}
+                source={{ uri: media.thumbnail || media.url }}
+                style={styles.mediaImage}
+                placeholder={<Image source={require('../../assets/placeholder.png')} style={styles.mediaImage} />}
+                errorComponent={<Image source={require('../../assets/error.png')} style={styles.mediaImage} />}
+              />
           ))}
           {item.media.length > 3 && (
             <View style={styles.moreMediaOverlay}>
@@ -176,8 +231,8 @@ const MomentListScreen: React.FC<MomentListScreenProps> = ({ navigation }) => {
     </View>
   );
 
-  const renderFooter = () => {
-    if (!loadingMore) return null;
+  const renderFooter = (): React.ReactElement | undefined => {
+    if (!loadingMore) return undefined;
     return (
       <View style={styles.footerLoader}>
         <Text style={styles.loadingText}>加载更多...</Text>
@@ -185,30 +240,59 @@ const MomentListScreen: React.FC<MomentListScreenProps> = ({ navigation }) => {
     );
   };
 
-  if (isLoading && moments.length === 0) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>加载中...</Text>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
-      <FlatList
-        data={moments}
-        renderItem={renderMomentItem}
-        keyExtractor={(item) => item.id}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-        }
-        onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.1}
-        ListEmptyComponent={renderEmptyState}
-        ListFooterComponent={renderFooter}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={moments.length === 0 ? styles.emptyListContainer : styles.listContainer}
-      />
+      {showSearch && (
+        <View style={styles.searchContainer}>
+          <View style={styles.searchInputContainer}>
+            <Ionicons name="search-outline" size={20} color={colors.textSecondary} style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="搜索时光记录..."
+              placeholderTextColor={colors.textSecondary}
+              value={searchText}
+              onChangeText={setSearchText}
+              onSubmitEditing={handleSearch}
+              returnKeyType="search"
+              autoFocus
+            />
+            {searchText.length > 0 && (
+              <TouchableOpacity onPress={handleClearSearch} style={styles.clearButton}>
+                <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
+            )}
+          </View>
+          <TouchableOpacity onPress={handleSearch} style={styles.searchButton}>
+            <Text style={styles.searchButtonText}>搜索</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      {isLoading && moments.length === 0 ? (
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>加载中...</Text>
+        </View>
+      ) : (
+        <OptimizedFlatList
+          data={moments}
+          renderItem={renderMomentItem}
+          keyExtractor={(item) => item.id}
+          config={{
+            itemHeight: 200, // 估算每个时光记录卡片的高度
+            windowSize: 10,
+            initialNumToRender: 8,
+            maxToRenderPerBatch: 5,
+            updateCellsBatchingPeriod: 50,
+            removeClippedSubviews: true,
+          }}
+          onRefresh={handleRefresh}
+          refreshing={refreshing}
+          onEndReached={handleLoadMore}
+          emptyComponent={renderEmptyState()}
+          footerComponent={renderFooter()}
+          style={styles.list}
+          contentContainerStyle={moments.length === 0 ? styles.emptyListContainer : styles.listContainer}
+        />
+      )}
       
       <FloatingActionButton
         onPress={() => navigation.navigate('CreateMoment', {})}
@@ -395,6 +479,49 @@ const styles = StyleSheet.create({
   footerLoader: {
     padding: spacing.md,
     alignItems: 'center'
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    padding: spacing.md,
+    backgroundColor: colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.gray200,
+    alignItems: 'center'
+  },
+  searchInputContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.gray100,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.sm,
+    marginRight: spacing.sm
+  },
+  searchIcon: {
+    marginRight: spacing.xs
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: fontSize.base,
+    color: colors.textPrimary,
+    paddingVertical: spacing.sm
+  },
+  clearButton: {
+    padding: spacing.xs
+  },
+  searchButton: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md
+  },
+  searchButtonText: {
+    fontSize: fontSize.base,
+    fontWeight: fontWeight.medium,
+    color: colors.white
+  },
+  list: {
+    flex: 1
   },
 
 });

@@ -66,7 +66,8 @@ class SimpleI18n {
     if (typeof value === 'string') {
       // 简单的模板替换
       return value.replace(/\{\{(\w+)\}\}/g, (match, key) => {
-        return options[key] !== undefined ? options[key].toString() : match;
+        const optionValue = options[key];
+        return optionValue !== undefined ? optionValue.toString() : match;
       });
     }
     

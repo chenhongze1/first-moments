@@ -1,0 +1,41 @@
+/* React Native Web 滚动修复 */
+/* 确保页面可以正常滚动 */
+
+html, body {
+  height: auto !important;
+  min-height: 100vh !important;
+  max-height: none !important;
+  overflow: visible !important;
+  overflow-y: auto !important;
+}
+
+#root {
+  height: auto !important;
+  min-height: 100vh !important;
+  max-height: none !important;
+  overflow: visible !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* 确保React Native Web容器可以滚动 */
+[data-reactroot] {
+  height: auto !important;
+  min-height: 100vh !important;
+  flex: 1 !important;
+}
+
+/* 修复ScrollView在Web上的滚动问题 */
+[style*="overflow"][style*="scroll"] {
+  overflow-y: auto !important;
+}
+
+/* 确保内容容器可以扩展 */
+[style*="flex: 1"] {
+  min-height: 0 !important;
+}
+
+/* 强制重新计算布局 */
+body {
+  transform: translateZ(0);
+}

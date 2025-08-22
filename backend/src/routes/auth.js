@@ -82,4 +82,7 @@ router.post('/resend-verification', [
     .normalizeEmail()
 ], authController.resendVerification);
 
+// 获取当前用户信息
+router.get('/me', auth, authController.getMe);
+
 module.exports = router;

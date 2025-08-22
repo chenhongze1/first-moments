@@ -8,13 +8,13 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import { forgotPasswordAsync, clearError } from '../../store/slices/authSlice';
+import { useErrorHandler } from '../../hooks/useErrorHandler';
 import { colors, spacing } from '../../styles';
 
 interface ForgotPasswordScreenProps {
@@ -26,30 +26,28 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({ navi
   const { isLoading, error } = useAppSelector((state) => state.auth);
   const [email, setEmail] = useState('');
   const [emailSent, setEmailSent] = useState(false);
+  const { handleError, showSuccess, showWarning } = useErrorHandler();
 
   const handleResetPassword = async () => {
     if (!email) {
-      Alert.alert('错误', '请输入邮箱地址');
+      showWarning('请输入邮箱地址');
       return;
     }
 
     if (!isValidEmail(email)) {
-      Alert.alert('错误', '请输入有效的邮箱地址');
+      showWarning('请输入有效的邮箱地址');
       return;
     }
 
     try {
       await dispatch(forgotPasswordAsync(email)).unwrap();
       setEmailSent(true);
-      Alert.alert(
-        '重置邮件已发送',
-        '请检查您的邮箱，按照邮件中的说明重置密码。',
-        [
-          { text: '确定', onPress: () => navigation.navigate('Login') }
-        ]
-      );
+      showSuccess('重置邮件已发送，请检查您的邮箱，按照邮件中的说明重置密码。');
     } catch (error: any) {
-      Alert.alert('发送失败', error || '请稍后重试');
+      handleError(error, {
+        showAlert: true,
+        showToast: false
+      });
     }
   };
 

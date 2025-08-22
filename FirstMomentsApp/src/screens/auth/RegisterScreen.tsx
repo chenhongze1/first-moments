@@ -8,7 +8,6 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
@@ -16,6 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppDispatch } from '../../hooks';
 import { registerAsync } from '../../store/slices/authSlice';
+import { useErrorHandler } from '../../hooks/useErrorHandler';
 import { colors, spacing } from '../../styles';
 
 interface RegisterScreenProps {
@@ -34,30 +34,31 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) =>
   const [isLoading, setIsLoading] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const dispatch = useAppDispatch();
+  const { handleError, showSuccess, showWarning } = useErrorHandler();
 
   const handleRegister = async () => {
     if (!formData.username || !formData.email || !formData.password || !formData.confirmPassword) {
-      Alert.alert('错误', '请填写所有字段');
+      showWarning('请填写所有字段');
       return;
     }
 
     if (!isValidEmail(formData.email)) {
-      Alert.alert('错误', '请输入有效的邮箱地址');
+      showWarning('请输入有效的邮箱地址');
       return;
     }
 
     if (formData.password.length < 6) {
-      Alert.alert('错误', '密码长度至少为6位');
+      showWarning('密码长度至少为6位');
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      Alert.alert('错误', '两次输入的密码不一致');
+      showWarning('两次输入的密码不一致');
       return;
     }
 
     if (!agreedToTerms) {
-      Alert.alert('错误', '请同意用户协议和隐私政策');
+      showWarning('请同意用户协议和隐私政策');
       return;
     }
 
@@ -68,11 +69,12 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) =>
         email: formData.email,
         password: formData.password,
       })).unwrap();
-      Alert.alert('注册成功', '欢迎加入初见！', [
-        { text: '确定', onPress: () => navigation.navigate('Login') }
-      ]);
+      showSuccess('注册成功，欢迎加入初见！');
     } catch (error: any) {
-      Alert.alert('注册失败', error.message || '请稍后重试');
+      handleError(error, {
+        showAlert: true,
+        showToast: false
+      });
     } finally {
       setIsLoading(false);
     }

@@ -18,12 +18,18 @@ import * as ImagePicker from 'expo-image-picker';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useResponsive, responsive } from '../../src/utils/responsive';
 import { fontSize, fontWeight, spacing, borderRadius, shadows } from '../../src/styles';
+import { useDispatch, useSelector } from 'react-redux';
+import { createMomentAsync } from '../../src/store/slices/momentSlice';
+import { RootState } from '../../src/store';
+import { CreateMomentData, MoodType } from '../../src/services/momentAPI';
 
 const { width } = Dimensions.get('window');
 
 const CreateScreen = () => {
   const { theme } = useTheme();
   const responsiveUtils = useResponsive();
+  const dispatch = useDispatch();
+  const { isCreating } = useSelector((state: RootState) => state.moment);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [location, setLocation] = useState('');
@@ -98,24 +104,44 @@ const CreateScreen = () => {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!title.trim()) {
       Alert.alert('提示', '请输入记录标题');
       return;
     }
     
-    // 这里将来会连接到后端API
-    Alert.alert('成功', '记录已保存！', [
-      { text: '确定', onPress: () => {
-        // 重置表单
-        setTitle('');
-        setContent('');
-        setLocation('');
-        setMood('');
-        setSelectedImages([]);
-        setSelectedTags([]);
-      }}
-    ]);
+    const momentData: CreateMomentData = {
+       title: title.trim(),
+       content: content.trim() || title.trim(),
+       profileId: 'default-profile', // 需要从用户状态获取
+       tags: selectedTags,
+       mood: mood as MoodType,
+       location: location.trim() ? {
+         coordinates: {
+           latitude: 0,
+           longitude: 0
+         },
+         address: { formatted: location.trim() }
+       } : undefined,
+       privacy: 'public'
+     };
+
+    try {
+       await dispatch(createMomentAsync(momentData)).unwrap();
+      Alert.alert('成功', '记录已保存！', [
+        { text: '确定', onPress: () => {
+          // 重置表单
+          setTitle('');
+          setContent('');
+          setLocation('');
+          setMood('');
+          setSelectedImages([]);
+          setSelectedTags([]);
+        }}
+      ]);
+    } catch (error) {
+      Alert.alert('错误', '保存失败，请重试');
+    }
   };
 
   return (
@@ -130,7 +156,11 @@ const CreateScreen = () => {
           <Text style={styles.headerSubtitle}>记录生活中的美好瞬间</Text>
         </LinearGradient>
 
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          style={styles.scrollView} 
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
         {/* 标题输入 */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>标题</Text>
@@ -258,13 +288,13 @@ const CreateScreen = () => {
         </View>
 
         {/* 保存按钮 */}
-        <AnimatedButton style={styles.saveButton} onPress={handleSave}>
+        <AnimatedButton style={styles.saveButton} onPress={handleSave} disabled={isCreating}>
           <LinearGradient
             colors={[colors.primary, colors.secondary]}
-            style={styles.saveButtonGradient}
+            style={[styles.saveButtonGradient, isCreating && styles.disabledButton]}
           >
-            <Ionicons name="checkmark" size={24} color="white" />
-            <Text style={styles.saveButtonText}>保存记录</Text>
+            <Ionicons name={isCreating ? "hourglass" : "checkmark"} size={24} color="white" />
+            <Text style={styles.saveButtonText}>{isCreating ? '保存中...' : '保存记录'}</Text>
           </LinearGradient>
         </AnimatedButton>
         </ScrollView>
@@ -293,8 +323,11 @@ const createStyles = (colors: any, responsiveUtils: any) => StyleSheet.create({
     fontSize: responsiveUtils.isTablet ? responsive.fontSize.lg : responsive.fontSize.md,
     color: 'rgba(255, 255, 255, 0.8)',
   },
-  content: {
+  scrollView: {
     flex: 1,
+  },
+  content: {
+    flexGrow: 1,
     padding: responsiveUtils.getSafeAreaPadding().horizontal,
   },
   section: {
@@ -450,6 +483,9 @@ const createStyles = (colors: any, responsiveUtils: any) => StyleSheet.create({
     fontWeight: '600',
     color: 'white',
     marginLeft: responsive.spacing.sm,
+  },
+  disabledButton: {
+    opacity: 0.6,
   },
 });
 

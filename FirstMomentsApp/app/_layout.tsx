@@ -5,6 +5,8 @@ import { Provider } from 'react-redux';
 import { Stack } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
+// Web平台滚动修复
+import '../src/styles/global.web';
 
 import { store } from '../src/store';
 import { useAppDispatch } from '../src/hooks/redux';

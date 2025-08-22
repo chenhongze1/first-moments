@@ -5,34 +5,44 @@
     "baseUrl": ".",
     "paths": {
       "@/*": [
-        "./*"
+        "./*",
+        "./src/*"
       ],
       "@components/*": [
-        "./components/*"
+        "./components/*",
+        "./src/components/*"
       ],
       "@screens/*": [
-        "./screens/*"
+        "./screens/*",
+        "./src/screens/*"
       ],
       "@services/*": [
-        "./services/*"
+        "./services/*",
+        "./src/services/*"
       ],
       "@utils/*": [
-        "./utils/*"
+        "./utils/*",
+        "./src/utils/*"
       ],
       "@types/*": [
-        "./types/*"
+        "./types/*",
+        "./src/types/*"
       ],
       "@assets/*": [
-        "./assets/*"
+        "./assets/*",
+        "./src/assets/*"
       ],
       "@store/*": [
-        "./store/*"
+        "./store/*",
+        "./src/store/*"
       ],
       "@hooks/*": [
-        "./hooks/*"
+        "./hooks/*",
+        "./src/hooks/*"
       ],
       "@navigation/*": [
-        "./navigation/*"
+        "./navigation/*",
+        "./src/navigation/*"
       ]
     },
     "noImplicitAny": true,

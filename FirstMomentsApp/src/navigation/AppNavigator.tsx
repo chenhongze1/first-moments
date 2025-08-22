@@ -8,17 +8,21 @@ import { LoginScreen } from '../screens/LoginScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { AccessibilitySettingsScreen } from '../screens/AccessibilitySettingsScreen';
 import LanguageSettingsScreen from '../screens/LanguageSettingsScreen';
+import { DeveloperScreen } from '../screens/DeveloperScreen';
 import { AchievementScreen } from '../screens/achievement/AchievementScreen';
+import StatsScreen from '../screens/StatsScreen';
 import { colors } from '../styles';
 import { AccessibilityProvider } from '../contexts/AccessibilityContext';
 import { I18nProvider } from '../contexts/I18nContext';
 import ProfileNavigator from './ProfileNavigator';
 import MomentNavigator, { MomentStackParamList } from './MomentNavigator';
+import MapScreen from '../../app/(tabs)/map';
 
 // 定义导航参数类型
 export type RootStackParamList = {
   Auth: undefined;
   Main: undefined;
+  Stats: undefined;
 };
 
 export type AuthStackParamList = {
@@ -35,6 +39,7 @@ export type MainTabParamList = {
   Profile: undefined;
   AccessibilitySettings: undefined;
   LanguageSettings: undefined;
+  Developer: undefined;
 };
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
@@ -91,7 +96,7 @@ const MainNavigator = () => {
       {/* 其他主要屏幕将在后续添加 */}
       <MainTab.Screen
         name="Map"
-        component={PlaceholderScreen}
+        component={MapScreen}
         options={{
           tabBarLabel: '地图',
           tabBarIcon: ({ color, size }) => (
@@ -149,6 +154,18 @@ const MainNavigator = () => {
             ),
           }}
         />
+        {__DEV__ && (
+          <MainTab.Screen
+            name="Developer"
+            component={DeveloperScreen}
+            options={{
+              title: '开发者工具',
+              tabBarIcon: ({ color, size }) => (
+                <TabIcon name="⚙️" color={color} size={size} />
+              ),
+            }}
+          />
+        )}
     </MainTab.Navigator>
   );
 };
@@ -205,7 +222,18 @@ export const AppNavigator = () => {
             }}
           >
             {isAuthenticated ? (
-              <RootStack.Screen name="Main" component={MainNavigator} />
+              <>
+                <RootStack.Screen name="Main" component={MainNavigator} />
+                <RootStack.Screen 
+                  name="Stats" 
+                  component={StatsScreen}
+                  options={{
+                    headerShown: true,
+                    title: '统计分析',
+                    animation: 'slide_from_right',
+                  }}
+                />
+              </>
             ) : (
               <RootStack.Screen name="Auth" component={AuthNavigator} />
             )}

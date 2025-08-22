@@ -75,6 +75,18 @@ const userSchema = new mongoose.Schema({
   lockUntil: Date,
   lastLoginAt: Date,
   lastLoginIP: String,
+  refreshTokens: [{
+    token: {
+      type: String,
+      required: true
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    },
+    userAgent: String,
+    ipAddress: String
+  }],
   preferences: {
     language: {
       type: String,

@@ -52,6 +52,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+    padding: spacing.lg,
   },
   placeholder: {
     flex: 1,

@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { colors, borderRadius } from '../styles';
 import { ImageCacheManager } from '../utils/memoryManager';
+import { performanceMonitor } from '../utils/performanceMonitor';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -78,6 +79,11 @@ export const LazyImage: React.FC<LazyImageProps> = ({
     setIsLoaded(true);
     onLoad?.();
     
+    // 性能监控
+    if (typeof source === 'object' && source.uri) {
+      performanceMonitor.monitorImageLoad(source.uri).onLoadEnd();
+    }
+    
     // 缓存图片
      if (typeof source === 'object' && source.uri) {
        // 这里可以在实际加载完成后缓存base64数据
@@ -94,6 +100,11 @@ export const LazyImage: React.FC<LazyImageProps> = ({
   const handleImageError = () => {
     setHasError(true);
     onError?.();
+    
+    // 性能监控
+    if (typeof source === 'object' && source.uri) {
+      performanceMonitor.monitorImageLoad(source.uri).onError();
+    }
   };
 
   const renderPlaceholder = () => {
@@ -141,6 +152,11 @@ export const LazyImage: React.FC<LazyImageProps> = ({
               ]}
               resizeMode={resizeMode}
               blurRadius={blurRadius}
+              onLoadStart={() => {
+                if (typeof source === 'object' && source.uri) {
+                  performanceMonitor.monitorImageLoad(source.uri).onLoadStart();
+                }
+              }}
               onLoad={handleImageLoad}
               onError={handleImageError}
             />
@@ -176,8 +192,8 @@ export const LazyImageGrid: React.FC<ImageGridProps> = ({
         style={[
           styles.gridItem,
           {
-            width: imageSize,
-            height: imageSize,
+            width: imageSize as any,
+            height: imageSize as any,
             marginLeft: spacing,
             marginBottom: spacing,
           },
@@ -209,7 +225,9 @@ class ImageCache {
   set(key: string, value: string) {
     if (this.cache.size >= this.maxSize) {
       const firstKey = this.cache.keys().next().value;
-      this.cache.delete(firstKey);
+      if (firstKey) {
+        this.cache.delete(firstKey);
+      }
     }
     this.cache.set(key, value);
   }
