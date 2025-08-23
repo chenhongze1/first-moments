@@ -71,22 +71,39 @@ if (typeof window !== 'undefined') {
         }
       });
       
-      // 如果内容高度超过视口，强制设置容器高度
-      if (maxHeight > window.innerHeight) {
-        const heightValue = `${maxHeight}px`;
-        
-        // 强制设置所有关键容器的高度
-        [html, body, root, reactRoot].forEach(element => {
-          if (element) {
-            (element as HTMLElement).style.height = heightValue;
-            (element as HTMLElement).style.minHeight = heightValue;
-            (element as HTMLElement).style.maxHeight = 'none';
-            (element as HTMLElement).style.overflow = 'auto';
-          }
-        });
-        
-        console.log(`强制设置内容高度为: ${heightValue}`);
+      // 总是允许滚动，不限制容器高度
+      const minHeight = Math.max(maxHeight, window.innerHeight);
+      
+      // 设置容器为自动高度，允许内容扩展
+      [html, body].forEach(element => {
+        if (element) {
+          (element as HTMLElement).style.height = 'auto';
+          (element as HTMLElement).style.minHeight = '100vh';
+          (element as HTMLElement).style.maxHeight = 'none';
+          (element as HTMLElement).style.overflow = 'auto';
+        }
+      });
+      
+      // root容器特殊处理
+      if (root) {
+        root.style.height = 'auto';
+        root.style.minHeight = '100vh';
+        root.style.maxHeight = 'none';
+        root.style.overflow = 'visible';
+        root.style.display = 'flex';
+        root.style.flexDirection = 'column';
       }
+      
+      // React Native Web容器处理
+      if (reactRoot) {
+        reactRoot.style.height = 'auto';
+        reactRoot.style.minHeight = '100vh';
+        reactRoot.style.maxHeight = 'none';
+        reactRoot.style.overflow = 'visible';
+        reactRoot.style.flex = '1';
+      }
+      
+      console.log(`内容高度: ${maxHeight}px, 视口高度: ${window.innerHeight}px`);
     };
     
     // 修复所有可能的固定高度容器
@@ -101,15 +118,93 @@ if (typeof window !== 'undefined') {
           container.style.height = 'auto';
           container.style.minHeight = height;
         }
+        
+        // 特别处理React Native Web的ScrollView容器
+        if (computedStyle.overflow === 'hidden' && container.children.length > 0) {
+          container.style.overflow = 'visible';
+        }
+        
+        // 修复flex容器的高度限制
+        if (computedStyle.display === 'flex' && computedStyle.flexDirection === 'column') {
+          if (height === '667px' || height === '100vh') {
+            container.style.height = 'auto';
+            container.style.minHeight = '100vh';
+          }
+        }
+      });
+      
+      // 特别处理所有可能的滚动容器
+      const scrollContainers = document.querySelectorAll('[style*="overflow"]');
+      scrollContainers.forEach(container => {
+        const element = container as HTMLElement;
+        if (element.style.overflow === 'hidden') {
+          element.style.overflow = 'auto';
+        }
+        
+        // 确保滚动容器可以扩展
+        if (element.style.height === '667px' || element.style.height === '100vh') {
+          element.style.height = 'auto';
+          element.style.minHeight = '100vh';
+        }
       });
     };
     
-    fixContainerHeights();
+    // 修复React Native Web主容器
+    const fixReactNativeMainContainer = () => {
+      const root = document.getElementById('root');
+      if (root && root.children.length > 0) {
+        const mainContainer = root.children[0] as HTMLElement;
+        
+        // 强制移除高度限制
+        mainContainer.style.setProperty('height', 'auto', 'important');
+        mainContainer.style.setProperty('min-height', '100vh', 'important');
+        mainContainer.style.setProperty('max-height', 'none', 'important');
+        mainContainer.style.setProperty('overflow', 'visible', 'important');
+        
+        // 确保flex布局正确
+        mainContainer.style.setProperty('display', 'flex', 'important');
+        mainContainer.style.setProperty('flex-direction', 'column', 'important');
+        mainContainer.style.setProperty('flex', '1', 'important');
+        
+        console.log('已修复React Native主容器高度限制');
+      }
+    };
+    
+    // 修复ScrollView容器滚动问题
+    const fixScrollViewContainer = () => {
+      // 查找ScrollView容器
+      const scrollContainer = document.querySelector('.r-overflow-1dqxon3') as HTMLElement;
+      if (scrollContainer) {
+        // 强制设置滚动样式
+        scrollContainer.style.setProperty('overflow', 'auto', 'important');
+        scrollContainer.style.setProperty('overflow-y', 'auto', 'important');
+        scrollContainer.style.setProperty('height', '100vh', 'important');
+        scrollContainer.style.setProperty('max-height', '100vh', 'important');
+        
+        // 确保内容容器可以扩展
+        const contentContainer = scrollContainer.querySelector('.r-minHeight-sa2ff0') as HTMLElement;
+        if (contentContainer) {
+          contentContainer.style.setProperty('min-height', 'auto', 'important');
+          contentContainer.style.setProperty('height', 'auto', 'important');
+        }
+        
+        console.log('已修复ScrollView容器滚动');
+      }
+    };
+    
+    // 应用所有修复
+    const applyAllFixes = () => {
+      forceScrollFix();
+      fixContainerHeights();
+      fixReactNativeMainContainer();
+      fixScrollViewContainer();
+      console.log('Applied comprehensive scroll and height fixes');
+    };
+    
+    applyAllFixes();
     
     // 延迟执行强制修复，确保DOM完全渲染
-    setTimeout(forceScrollFix, 100);
-    
-    console.log('Applied comprehensive scroll and height fixes');
+    setTimeout(applyAllFixes, 100);
   };
   
   // 页面加载完成后立即执行
@@ -149,7 +244,7 @@ if (typeof window !== 'undefined') {
       }
       
       if (needsFix) {
-        fixBodyOverflow();
+        setTimeout(fixBodyOverflow, 50);
       }
     });
   

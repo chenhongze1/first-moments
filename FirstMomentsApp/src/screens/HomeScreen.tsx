@@ -40,10 +40,8 @@ export const HomeScreen: React.FC = () => {
   }, [dispatch]);
 
   const handleCreateRecord = () => {
-    navigation.navigate('Records', {
-      screen: 'CreateMoment',
-      params: { isEdit: false }
-    });
+    // 创建记录功能已被移除
+    console.log('创建记录功能已被移除');
   };
 
   const handleViewMap = () => {

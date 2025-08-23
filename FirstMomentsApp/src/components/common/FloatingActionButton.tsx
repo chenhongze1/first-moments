@@ -68,7 +68,10 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
         disabled && styles.disabled,
         style,
       ]}
-      onPress={onPress}
+      onPress={() => {
+        console.log('FloatingActionButton TouchableOpacity onPress triggered');
+        onPress();
+      }}
       disabled={disabled}
       activeOpacity={0.8}
     >

@@ -224,7 +224,7 @@ const MomentListScreen: React.FC<MomentListScreenProps> = ({ navigation }) => {
       <Text style={styles.emptySubtitle}>记录生活中的美好瞬间</Text>
       <TouchableOpacity
         style={styles.createButton}
-        onPress={() => navigation.navigate('CreateMoment')}
+        onPress={() => console.log('创建记录功能已被移除')}
       >
         <Text style={styles.createButtonText}>创建第一条记录</Text>
       </TouchableOpacity>
@@ -295,9 +295,11 @@ const MomentListScreen: React.FC<MomentListScreenProps> = ({ navigation }) => {
       )}
       
       <FloatingActionButton
-        onPress={() => navigation.navigate('CreateMoment', {})}
-        icon="add"
-      />
+          onPress={() => {
+            console.log('创建记录功能已被移除');
+          }}
+          icon="add"
+        />
     </View>
   );
 };

@@ -2,7 +2,6 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import MomentListScreen from '../screens/moment/MomentListScreen';
 import MomentDetailScreen from '../screens/moment/MomentDetailScreen';
-import CreateMomentScreen from '../screens/moment/CreateMomentScreen';
 import { colors } from '../styles';
 
 // 定义时光记录导航参数类型
@@ -10,10 +9,6 @@ export type MomentStackParamList = {
   MomentList: undefined;
   MomentDetail: {
     momentId: string;
-  };
-  CreateMoment: {
-    moment?: any;
-    isEdit?: boolean;
   };
 };
 
@@ -51,15 +46,7 @@ const MomentNavigator = () => {
           headerBackTitle: '返回',
         }}
       />
-      <MomentStack.Screen
-        name="CreateMoment"
-        component={CreateMomentScreen}
-        options={({ route }) => ({
-          title: route.params?.isEdit ? '编辑记录' : '创建记录',
-          headerBackTitle: '取消',
-          presentation: 'modal',
-        })}
-      />
+
     </MomentStack.Navigator>
   );
 };

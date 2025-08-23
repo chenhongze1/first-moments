@@ -1,5 +1,5 @@
 import React from 'react';
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
 import {
   View,
   Text,
@@ -35,7 +35,7 @@ const HomeScreen = () => {
   const styles = createStyles(colors, responsiveUtils);
   
   const quickActions = [
-    { id: 1, title: '创建记录', icon: 'add-circle', color: colors.primary, route: '/moments' },
+    { id: 1, title: '创建记录', icon: 'add-circle', color: colors.primary, route: '/create' },
     { id: 2, title: '地图打卡', icon: 'location', color: colors.secondary, route: '/map' },
     { id: 3, title: '浏览记录', icon: 'list', color: colors.error, route: '/moments' },
     { id: 4, title: '统计分析', icon: 'stats-chart', color: '#FF9500', route: '/achievements' },
@@ -74,6 +74,12 @@ const HomeScreen = () => {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        bounces={Platform.OS !== 'web'}
+        alwaysBounceVertical={Platform.OS !== 'web'}
+        decelerationRate="normal"
+        scrollEventThrottle={16}
+        nestedScrollEnabled={true}
+        scrollEnabled={true}
       >
         {/* 欢迎区域 */}
         <FadeInView delay={0}>
@@ -179,9 +185,16 @@ const createStyles = (colors: any, responsiveUtils: any) => StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+    ...(Platform.OS === 'web' && {
+      height: '100vh' as any,
+      overflow: 'auto' as any,
+    }),
   },
   scrollContent: {
-    flexGrow: 1,
+    paddingBottom: responsive.spacing.xl,
+    ...(Platform.OS === 'web' && {
+      minHeight: '100vh' as any,
+    }),
   },
   welcomeSection: {
     padding: responsiveUtils.isTablet ? responsive.spacing.xl : responsive.spacing.lg,
@@ -231,7 +244,8 @@ const createStyles = (colors: any, responsiveUtils: any) => StyleSheet.create({
     marginHorizontal: spacing.md,
   },
   section: {
-    padding: responsiveUtils.isTablet ? responsive.spacing.xl : responsive.spacing.lg,
+    paddingHorizontal: responsiveUtils.isTablet ? responsive.spacing.xl : responsive.spacing.lg,
+    paddingVertical: responsive.spacing.md,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -265,11 +279,18 @@ const createStyles = (colors: any, responsiveUtils: any) => StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: responsive.spacing.sm,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
   },
   quickActionTitle: {
     fontSize: responsive.fontSize.xs,
     color: colors.textPrimary,
     textAlign: 'center',
+    fontWeight: '500',
+    marginTop: 2,
   },
   momentCard: {
     flexDirection: 'row',

@@ -1,0 +1,48 @@
+/* Web平台滚动修复 */
+html, body {
+  height: 100%;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+#root, [data-reactroot] {
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* React Native Web ScrollView 修复 */
+.css-view-1dbjc4n {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+  height: 100%;
+}
+
+/* 强制所有滚动容器 */
+[style*="overflow"] {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 特定的滚动容器修复 */
+.rn-scrollview,
+[data-focusable="true"] {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+  height: 100%;
+}
+
+/* 确保内容可以滚动 */
+body * {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+/* 移动端触摸滚动 */
+@media (max-width: 768px) {
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+}

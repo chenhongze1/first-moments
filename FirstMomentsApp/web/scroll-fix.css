@@ -28,6 +28,7 @@ html, body {
 /* 修复ScrollView在Web上的滚动问题 */
 [style*="overflow"][style*="scroll"] {
   overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
 }
 
 /* 确保内容容器可以扩展 */
@@ -35,7 +36,27 @@ html, body {
   min-height: 0 !important;
 }
 
+/* 强制所有可能的滚动容器 */
+.rn-scrollview, 
+[data-focusable="true"],
+[style*="overflow: hidden"] {
+  overflow-y: auto !important;
+  height: auto !important;
+  max-height: none !important;
+}
+
 /* 强制重新计算布局 */
 body {
   transform: translateZ(0);
+}
+
+/* 特殊修复：强制所有容器允许滚动 */
+* {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 确保Screen组件可以滚动 */
+[style*="flex: 1"][style*="overflow"] {
+  overflow-y: auto !important;
+  height: 100vh !important;
 }

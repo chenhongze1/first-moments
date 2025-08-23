@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   ScrollView,
@@ -6,6 +6,7 @@ import {
   StatusBar,
   StyleSheet,
   ViewStyle,
+  Platform,
 } from 'react-native';
 import { colors } from '../styles';
 
@@ -30,6 +31,35 @@ export const Screen: React.FC<ScreenProps> = ({
   backgroundColor = colors.background,
   padding = true,
 }) => {
+  // Web平台滚动修复
+  useEffect(() => {
+    if (Platform.OS === 'web' && scrollable) {
+      // 移除可能阻止滚动的样式
+      const style = document.createElement('style');
+      style.textContent = `
+        html, body {
+          height: auto;
+          min-height: 100vh;
+          overflow: auto;
+        }
+        #root {
+          height: auto;
+          min-height: 100vh;
+          overflow: visible;
+        }
+        .css-view-1dbjc4n {
+          overflow: visible !important;
+          -webkit-overflow-scrolling: touch;
+        }
+      `;
+      document.head.appendChild(style);
+      
+      return () => {
+        document.head.removeChild(style);
+      };
+    }
+  }, [scrollable]);
+
   const containerStyle = [
     styles.container,
     { backgroundColor },
@@ -37,12 +67,21 @@ export const Screen: React.FC<ScreenProps> = ({
     style,
   ];
 
+  const webScrollViewStyle = Platform.OS === 'web' ? {
+    flex: 1,
+  } : {};
+
   const content = scrollable ? (
     <ScrollView
-      style={containerStyle}
-      contentContainerStyle={styles.scrollContent}
-      showsVerticalScrollIndicator={false}
+      style={[containerStyle, { flex: 1 }, webScrollViewStyle]}
+      contentContainerStyle={[styles.scrollContent, { flexGrow: 1 }]}
+      showsVerticalScrollIndicator={true}
       keyboardShouldPersistTaps="handled"
+      bounces={Platform.OS !== 'web'}
+      scrollEnabled={true}
+      alwaysBounceVertical={Platform.OS !== 'web'}
+      overScrollMode={Platform.OS === 'android' ? 'always' : 'auto'}
+      nestedScrollEnabled={true}
     >
       {children}
     </ScrollView>
@@ -78,6 +117,6 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   scrollContent: {
-    flexGrow: 1,
+    paddingBottom: 100, // 确保底部有足够空间
   },
 });

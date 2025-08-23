@@ -114,10 +114,8 @@ const MomentDetailScreen: React.FC<MomentDetailScreenProps> = ({ route, navigati
 
   const handleEditMoment = () => {
     if (currentMoment) {
-      navigation.navigate('CreateMoment', {
-        moment: currentMoment,
-        isEdit: true
-      });
+      // 编辑记录功能已被移除
+        console.log('编辑记录功能已被移除');
     }
   };
 

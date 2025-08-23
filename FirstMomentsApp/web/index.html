@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <title>First Moments</title>
+  <link rel="stylesheet" href="../scroll-fix.css" />
+  <style>
+    /* 内联关键CSS确保滚动工作 */
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+    }
+    
+    #root {
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* React Native Web 滚动修复 */
+    .css-view-1dbjc4n {
+      overflow-y: auto !important;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    [style*="overflow"] {
+      overflow-y: auto !important;
+      -webkit-overflow-scrolling: touch;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+</body>
+</html>
