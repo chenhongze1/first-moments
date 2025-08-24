@@ -398,7 +398,7 @@ export function ListEnhanced<T>({
         keyExtractor={keyExtractor || ((item, index) => index.toString())}
         ItemSeparatorComponent={renderSeparator}
         ListEmptyComponent={data.length === 0 ? renderEmpty : null}
-        ListHeaderComponent={headerComponent}
+        ListHeaderComponent={headerComponent as React.ComponentType<any> | React.ReactElement | null}
         ListFooterComponent={renderFooter}
         refreshControl={
           mergedConfig.enableRefresh && onRefresh ? (

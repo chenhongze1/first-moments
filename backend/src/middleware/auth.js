@@ -129,7 +129,8 @@ const rateLimitLogin = async (req, res, next) => {
     
     if (user && user.loginAttempts >= 5) {
       const lockTime = 15 * 60 * 1000; // 15分钟
-      const timeSinceLastAttempt = Date.now() - user.lastLoginAttempt.getTime();
+      const lastAttemptTime = user.lastLoginAttempt ? new Date(user.lastLoginAttempt).getTime() : 0;
+      const timeSinceLastAttempt = Date.now() - lastAttemptTime;
       
       if (timeSinceLastAttempt < lockTime) {
         const remainingTime = Math.ceil((lockTime - timeSinceLastAttempt) / 60000);

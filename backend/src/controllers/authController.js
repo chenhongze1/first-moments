@@ -30,6 +30,10 @@ exports.register = async (req, res, next) => {
     // 验证输入
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      logger.error('Registration validation failed:', {
+        errors: errors.array(),
+        body: req.body
+      });
       return next(new AppError(errors.array()[0].msg, 400));
     }
 
@@ -49,19 +53,15 @@ exports.register = async (req, res, next) => {
       }
     }
 
-    // 加密密码
-    const saltRounds = 12;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
-
     // 生成邮箱验证token
     const emailVerificationToken = crypto.randomBytes(32).toString('hex');
     const emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24小时
 
-    // 创建用户
+    // 创建用户（密码会在User模型的pre('save')中间件中自动哈希）
     const user = new User({
       username,
       email,
-      password: hashedPassword,
+      password,
       profile: {
         nickname: profile.nickname || username,
         avatar: profile.avatar || '',
@@ -149,6 +149,7 @@ exports.login = async (req, res, next) => {
 
     // 验证密码
     const isPasswordValid = await bcrypt.compare(password, user.password);
+    
     if (!isPasswordValid) {
       // 记录登录失败
       user.loginAttempts = (user.loginAttempts || 0) + 1;
@@ -166,8 +167,8 @@ exports.login = async (req, res, next) => {
     }
 
     // 检查账户是否被锁定
-    if (user.accountLockedUntil && user.accountLockedUntil > new Date()) {
-      const remainingTime = Math.ceil((user.accountLockedUntil - new Date()) / 1000 / 60);
+    if (user.accountLockedUntil && new Date(user.accountLockedUntil) > new Date()) {
+      const remainingTime = Math.ceil((new Date(user.accountLockedUntil) - new Date()) / 1000 / 60);
       return next(new AppError(`账户已被锁定，请${remainingTime}分钟后再试`, 423));
     }
 
@@ -182,7 +183,7 @@ exports.login = async (req, res, next) => {
 
     // 清理过期的refresh tokens
     user.refreshTokens = user.refreshTokens.filter(
-      token => token.createdAt > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+      token => token.createdAt && new Date(token.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
     );
 
     // 保存新的refresh token

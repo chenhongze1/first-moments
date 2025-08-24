@@ -8,6 +8,9 @@
     "scheme": "firstmomentsapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true
     },
@@ -24,7 +27,7 @@
       "favicon": "./assets/images/favicon.png",
       "build": {
         "babel": {
-          "include": ["web/scroll-fix.css"]
+          "include": ["web/scroll-fix.css", "web/fonts.css"]
         }
       }
     },

@@ -146,6 +146,11 @@ export const TabBar: React.FC<TabBarProps> = ({ state, descriptors, navigation }
 
 const styles = StyleSheet.create({
   container: {
+    position: 'fixed' as any,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: Platform.OS === 'web' ? 80 : 'auto',
     backgroundColor: colors.white,
     borderTopWidth: 1,
     borderTopColor: colors.gray100,
@@ -157,6 +162,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 8,
+    zIndex: 1000,
   },
   tabBar: {
     flexDirection: 'row',

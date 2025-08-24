@@ -8,6 +8,13 @@ if (process.env.EXPO_PLATFORM === 'web') {
   config.resolver.blockList = [
     /react-native-maps/,
   ];
+  
+  // 配置静态资源
+  config.resolver.assetExts.push('ttf');
+  config.web = {
+    ...config.web,
+    staticFolder: 'web'
+  };
 }
 
 module.exports = config;

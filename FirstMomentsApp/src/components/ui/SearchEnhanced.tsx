@@ -144,7 +144,7 @@ export function SearchEnhanced({
 }: SearchEnhancedProps) {
   const mergedConfig = { ...defaultConfig, ...config };
   const inputRef = useRef<TextInput>(null);
-  const debounceRef = useRef<NodeJS.Timeout>();
+  const debounceRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const animationValue = useRef(new Animated.Value(0)).current;
   
   // 状态

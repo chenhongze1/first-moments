@@ -8,6 +8,7 @@ import {
   Dimensions,
   ScrollView,
   TextInput,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -422,7 +423,7 @@ const createStyles = (colors: any, responsiveUtils: any) => StyleSheet.create({
   },
   scrollContent: {
     padding: spacing.lg,
-    paddingBottom: spacing.xl * 2,
+    paddingBottom: Platform.OS === 'web' ? 120 : spacing.xl * 2, // 为底部导航栏留出空间
   },
   searchContainer: {
     flexDirection: 'row',

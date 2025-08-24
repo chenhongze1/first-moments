@@ -73,7 +73,9 @@ const userSchema = new mongoose.Schema({
     default: 0
   },
   lockUntil: Date,
+  accountLockedUntil: Date,
   lastLoginAt: Date,
+  lastLoginAttempt: Date,
   lastLoginIP: String,
   refreshTokens: [{
     token: {

@@ -19,4 +19,13 @@ router.get('/', auth, userController.getUsers);
 // 获取指定用户信息
 router.get('/:id', auth, userController.getUser);
 
+// 更新隐私设置
+router.put('/me/privacy', auth, userController.updatePrivacySettings);
+
+// 更新安全设置
+router.put('/me/security', auth, userController.updateSecuritySettings);
+
+// 更新通知设置
+router.put('/me/notifications', auth, userController.updateNotificationSettings);
+
 module.exports = router;

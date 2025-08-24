@@ -22,7 +22,7 @@ class HttpClient {
 
   constructor() {
     this.instance = axios.create({
-      baseURL: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api',
+      baseURL: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001/api',
       timeout: 10000,
       headers: {
         'Content-Type': 'application/json',
@@ -124,6 +124,24 @@ class HttpClient {
         return config;
       },
       (error) => {
+        return Promise.reject(error);
+      }
+    );
+
+    // 响应拦截器 - 处理认证错误
+    this.instance.interceptors.response.use(
+      (response) => {
+        return response;
+      },
+      async (error) => {
+        if (error.response?.status === 401) {
+          // 清除过期的token
+          await AsyncStorage.removeItem('auth_token');
+          // 调用未授权处理器
+          if (this.onUnauthorized) {
+            this.onUnauthorized();
+          }
+        }
         return Promise.reject(error);
       }
     );

@@ -5,6 +5,7 @@ import {
   StyleSheet,
   SafeAreaView,
   ScrollView,
+  Platform,
 } from 'react-native';
 import { colors, spacing } from '../../src/styles';
 
@@ -53,6 +54,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     padding: spacing.lg,
+    paddingBottom: Platform.OS === 'web' ? 100 : spacing.lg, // 为底部导航栏留出空间
   },
   placeholder: {
     flex: 1,

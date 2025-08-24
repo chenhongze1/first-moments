@@ -7,6 +7,11 @@ const router = express.Router();
 
 // 用户注册
 router.post('/register', [
+  (req, res, next) => {
+    console.log('=== Register route hit ===');
+    console.log('Request body:', JSON.stringify(req.body, null, 2));
+    next();
+  },
   body('username')
     .isLength({ min: 3, max: 20 })
     .withMessage('用户名长度必须在3-20个字符之间')
@@ -27,7 +32,19 @@ router.post('/register', [
         throw new Error('确认密码不匹配');
       }
       return true;
-    })
+    }),
+  (req, res, next) => {
+    console.log('=== Before validation check ===');
+    const { validationResult } = require('express-validator');
+    const errors = validationResult(req);
+    console.log('Validation errors:', errors.array());
+    console.log('Has errors:', !errors.isEmpty());
+    next();
+  },
+  (req, res, next) => {
+    console.log('=== About to call controller ===');
+    next();
+  }
 ], authController.register);
 
 // 用户登录

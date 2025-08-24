@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,13 +10,29 @@ import {
   Alert,
   Switch,
   Dimensions,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useDispatch } from 'react-redux';
+import { router } from 'expo-router';
+import { useAppSelector } from '../../src/hooks/redux';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { FadeInView, SlideInView, AnimatedButton } from '../../src/components/animations/AnimatedComponents';
 import { useResponsive, responsive } from '../../src/utils/responsive';
 import { spacing } from '../../src/styles';
+import EditProfileModal from '../../components/EditProfileModal';
+import PrivacySettingsModal, { PrivacySettings } from '../../components/PrivacySettingsModal';
+import SecuritySettingsModal, { SecuritySettings } from '../../components/SecuritySettingsModal';
+import DataBackupModal, { BackupSettings } from '../../components/DataBackupModal';
+import StorageManagementModal from '../../components/StorageManagementModal';
+import DataExportModal, { ExportSettings } from '../../components/DataExportModal';
+import FriendManagementModal from '../../components/FriendManagementModal';
+import ShareSettingsModal, { ShareSettings } from '../../components/ShareSettingsModal';
+import HelpFeedbackModal from '../../components/HelpFeedbackModal';
+import { userAPI, UpdateUserProfileData } from '../../src/services/userAPI';
+import { authAPI } from '../../src/services/authAPI';
+import { logout } from '../../src/store/slices/authSlice';
 
 const { width } = Dimensions.get('window');
 
@@ -65,14 +81,403 @@ const mockUser: UserProfile = {
 };
 
 export default function ProfileScreen() {
+  const dispatch = useDispatch();
   const { theme, isDark, themeMode, setThemeMode, toggleTheme } = useTheme();
+  const { isAuthenticated, user: authUser } = useAppSelector(state => state.auth);
+  
+  // 调试信息
+  console.log('ProfileScreen - 认证状态:', isAuthenticated);
+  console.log('ProfileScreen - 用户信息:', authUser);
   const [user, setUser] = useState<UserProfile>(mockUser);
+  const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState(true);
   const [locationSharing, setLocationSharing] = useState(true);
+  const [editProfileVisible, setEditProfileVisible] = useState(false);
+  
+  // 隐私设置模态框状态
+  const [privacySettingsVisible, setPrivacySettingsVisible] = useState(false);
+  
+  // 隐私设置数据
+  const [privacySettings, setPrivacySettings] = useState<PrivacySettings>({
+    profileVisibility: 'friends',
+    showOnlineStatus: true,
+    allowFriendRequests: true,
+    showLocation: true,
+    dataCollection: false,
+    personalizedAds: false,
+    shareAnalytics: false,
+  });
+  
+  // 安全设置模态框状态
+  const [securitySettingsVisible, setSecuritySettingsVisible] = useState(false);
+  
+  // 安全设置数据
+  const [securitySettings, setSecuritySettings] = useState<SecuritySettings>({
+    twoFactorEnabled: false,
+    biometricEnabled: true,
+    autoLockEnabled: true,
+    autoLockTime: 15,
+    loginNotifications: true,
+    suspiciousActivityAlerts: true,
+  });
+  
+  // 数据备份模态框状态
+  const [dataBackupVisible, setDataBackupVisible] = useState(false);
+  
+  // 数据备份设置
+  const [backupSettings, setBackupSettings] = useState<BackupSettings>({
+    autoBackup: true,
+    backupFrequency: 'weekly',
+    includePhotos: true,
+    includeVideos: false,
+    includeMessages: true,
+    includeSettings: true,
+    cloudProvider: 'icloud',
+  });
+  
+  // 存储管理模态框状态
+  const [storageManagementVisible, setStorageManagementVisible] = useState(false);
+  
+  // 数据导出模态框状态
+  const [dataExportVisible, setDataExportVisible] = useState(false);
+  
+  // 数据导出设置
+  const [exportSettings, setExportSettings] = useState<ExportSettings>({
+    includePhotos: true,
+    includeVideos: false,
+    includeMessages: true,
+    includeSettings: true,
+    includeContacts: false,
+    exportFormat: 'json',
+    dateRange: 'all',
+  });
+  
+  // 好友管理模态框状态
+  const [friendManagementVisible, setFriendManagementVisible] = useState(false);
+  const [shareSettingsVisible, setShareSettingsVisible] = useState(false);
+  const [helpFeedbackVisible, setHelpFeedbackVisible] = useState(false);
+  const [shareSettings, setShareSettings] = useState<ShareSettings>({
+    allowPublicSharing: false,
+    allowFriendSharing: true,
+    allowLocationSharing: false,
+    autoShareToSocial: false,
+    shareWithMetadata: true,
+    watermarkEnabled: false,
+    defaultSharePlatform: 'none',
+    shareQuality: 'high',
+  });
   const responsiveUtils = useResponsive();
   
   const colors = theme.colors;
   const styles = createStyles(colors, responsiveUtils);
+
+  // 加载用户数据
+  useEffect(() => {
+    // 设置未授权处理器
+    const { httpClient } = require('../../src/services/httpClient');
+    httpClient.setUnauthorizedHandler(() => {
+      Alert.alert('登录已过期', '请重新登录', [
+        { text: '确定', onPress: () => {
+          // 这里应该导航到登录页面
+          console.log('导航到登录页面');
+        }}
+      ]);
+    });
+    
+    loadUserData();
+  }, []);
+
+  const loadUserData = async () => {
+    try {
+      setLoading(true);
+      const userData = await userAPI.getCurrentUser();
+      setUser(userData);
+    } catch (error: any) {
+      console.error('加载用户数据失败:', error);
+      // 如果是401错误，说明需要登录
+      if (error.response?.status === 401) {
+        console.log('用户未登录，使用模拟数据');
+      }
+      // 使用模拟数据作为后备
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 创建测试用户并登录
+  const createTestUser = async () => {
+    try {
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      
+      // 生成随机用户名和邮箱
+      const randomId = Math.random().toString(36).substring(2, 8);
+      const username = `testuser_${randomId}`;
+      const email = `test_${randomId}@example.com`;
+      
+      console.log('Creating user:', { username, email });
+      
+      // 创建测试用户
+      const registerResponse = await fetch('http://localhost:3001/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username,
+          email,
+          password: 'Test123456',
+          confirmPassword: 'Test123456'
+        })
+      });
+      
+      if (registerResponse.ok) {
+        // 登录获取token
+        const loginResponse = await fetch('http://localhost:3001/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email,
+            password: 'Test123456'
+          })
+        });
+        
+        if (loginResponse.ok) {
+          const loginData = await loginResponse.json();
+          await AsyncStorage.setItem('auth_token', loginData.data.accessToken);
+          Alert.alert('成功', '测试用户创建并登录成功');
+          loadUserData(); // 重新加载用户数据
+        } else {
+          Alert.alert('错误', '登录失败');
+        }
+      } else {
+        // 用户可能已存在，尝试直接登录
+        const loginResponse = await fetch('http://localhost:3001/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email,
+            password: 'Test123456'
+          })
+        });
+        
+        if (loginResponse.ok) {
+          const loginData = await loginResponse.json();
+          await AsyncStorage.setItem('auth_token', loginData.data.accessToken);
+          Alert.alert('成功', '登录成功');
+          loadUserData(); // 重新加载用户数据
+        } else {
+          Alert.alert('错误', '创建用户和登录都失败');
+        }
+      }
+    } catch (error: any) {
+      console.error('创建测试用户失败:', error);
+      Alert.alert('错误', '网络请求失败: ' + error.message);
+    }
+  };
+
+  // 处理编辑个人资料
+  const handleEditProfile = () => {
+    setEditProfileVisible(true);
+  };
+
+  // 处理保存个人资料
+  const handleSaveProfile = async (updatedData: Partial<UserProfile>) => {
+    try {
+      // 转换数据格式以匹配API
+      const profileData: UpdateUserProfileData = {
+        username: updatedData.username,
+        email: updatedData.email,
+        bio: updatedData.bio,
+        avatar: updatedData.avatar,
+      };
+
+      // 调用API更新用户资料
+      const response = await userAPI.updateProfile(profileData);
+      
+      if (response.data.success) {
+        // 更新本地状态
+        setUser(prev => ({ ...prev, ...updatedData }));
+        setEditProfileVisible(false);
+        Alert.alert('成功', '个人资料已更新');
+      } else {
+        Alert.alert('错误', response.data.message || '更新失败');
+      }
+    } catch (error) {
+      console.error('更新个人资料失败:', error);
+      Alert.alert('错误', '网络错误，请稍后重试');
+    }
+  };
+
+  // 处理更换头像
+  const handleChangeAvatar = () => {
+    setEditProfileVisible(true);
+  };
+
+  // 处理隐私设置
+  const handlePrivacySettings = () => {
+    setPrivacySettingsVisible(true);
+  };
+
+  // 处理保存隐私设置
+  const handleSavePrivacySettings = async (newSettings: PrivacySettings) => {
+    try {
+      // 调用API更新隐私设置
+      const response = await userAPI.updatePrivacySettings(newSettings);
+      
+      if (response.data.success) {
+        // 更新本地状态
+        setPrivacySettings(newSettings);
+        setPrivacySettingsVisible(false);
+        Alert.alert('成功', '隐私设置已更新');
+      } else {
+        Alert.alert('错误', response.data.message || '更新失败');
+      }
+    } catch (error) {
+      console.error('更新隐私设置失败:', error);
+      Alert.alert('错误', '网络错误，请稍后重试');
+    }
+  };
+
+  // 处理安全设置
+  const handleSecuritySettings = () => {
+    setSecuritySettingsVisible(true);
+  };
+
+  // 处理保存安全设置
+  const handleSaveSecuritySettings = async (newSettings: SecuritySettings) => {
+    try {
+      // 调用API更新安全设置
+      const response = await userAPI.updateSecuritySettings(newSettings);
+      
+      if (response.data.success) {
+        // 更新本地状态
+        setSecuritySettings(newSettings);
+        setSecuritySettingsVisible(false);
+        Alert.alert('成功', '安全设置已更新');
+      } else {
+        Alert.alert('错误', response.data.message || '更新失败');
+      }
+    } catch (error) {
+      console.error('更新安全设置失败:', error);
+      Alert.alert('错误', '网络错误，请稍后重试');
+    }
+  };
+
+  // 处理退出登录
+  const handleLogout = () => {
+    console.log('退出登录按钮被点击');
+    
+    const performLogout = async () => {
+      console.log('用户确认退出登录');
+      try {
+        // 调用后端退出登录API
+        console.log('正在调用后端退出登录API...');
+        await authAPI.logout();
+        console.log('后端退出登录API调用成功');
+        
+        // 调用Redux logout action清除本地状态
+        console.log('正在清除Redux状态...');
+        dispatch(logout());
+        console.log('Redux状态已清除');
+        
+        // 认证状态变化会自动处理页面重定向
+        if (Platform.OS === 'web') {
+          alert('您已成功退出登录');
+        } else {
+          Alert.alert('已退出', '您已成功退出登录');
+        }
+      } catch (error) {
+        console.error('退出登录失败:', error);
+        if (Platform.OS === 'web') {
+          alert('退出登录失败，请重试');
+        } else {
+          Alert.alert('错误', '退出登录失败，请重试');
+        }
+      }
+    };
+    
+    if (Platform.OS === 'web') {
+      // Web环境使用window.confirm
+      console.log('Web环境，准备显示确认对话框');
+      try {
+        const confirmed = window.confirm('确定要退出当前账户吗？退出后需要重新登录。');
+        console.log('用户确认结果:', confirmed);
+        if (confirmed) {
+          performLogout();
+        } else {
+          console.log('用户取消了退出登录');
+        }
+      } catch (error) {
+        console.error('显示确认对话框失败:', error);
+        // 如果window.confirm失败，直接执行退出登录
+        performLogout();
+      }
+    } else {
+      // 移动端使用Alert.alert
+      Alert.alert(
+        '退出登录',
+        '确定要退出当前账户吗？退出后需要重新登录。',
+        [
+          { text: '取消', style: 'cancel' },
+          { 
+            text: '确定', 
+            style: 'destructive', 
+            onPress: performLogout
+          }
+        ]
+      );
+    }
+  };
+
+  // 处理数据备份
+  const handleDataBackup = () => {
+    setDataBackupVisible(true);
+  };
+
+  // 处理保存备份设置
+  const handleSaveBackupSettings = (newSettings: BackupSettings) => {
+    setBackupSettings(newSettings);
+    setDataBackupVisible(false);
+  };
+
+  // 处理存储管理
+  const handleStorageManagement = () => {
+    setStorageManagementVisible(true);
+  };
+
+  // 处理数据导出
+  const handleDataExport = () => {
+    setDataExportVisible(true);
+  };
+
+  // 处理保存导出设置
+  const handleSaveExportSettings = (newSettings: ExportSettings) => {
+    setExportSettings(newSettings);
+    setDataExportVisible(false);
+  };
+
+  // 处理好友管理
+  const handleFriendManagement = () => {
+    setFriendManagementVisible(true);
+  };
+
+  const handleShareSettings = () => {
+    setShareSettingsVisible(true);
+  };
+
+  const handleSaveShareSettings = (newSettings: ShareSettings) => {
+    setShareSettings(newSettings);
+    setShareSettingsVisible(false);
+    Alert.alert('成功', '分享设置已保存');
+  };
+
+  const handleHelpFeedback = () => {
+    setHelpFeedbackVisible(true);
+  };
 
   const settingSections = [
     {
@@ -84,7 +489,7 @@ export default function ProfileScreen() {
           subtitle: '修改头像、昵称和个人简介',
           icon: 'person-outline',
           type: 'navigation' as const,
-          onPress: () => Alert.alert('编辑个人资料', '功能开发中...'),
+          onPress: handleEditProfile,
         },
         {
           id: 'privacy',
@@ -92,7 +497,7 @@ export default function ProfileScreen() {
           subtitle: '管理你的隐私偏好',
           icon: 'shield-outline',
           type: 'navigation' as const,
-          onPress: () => Alert.alert('隐私设置', '功能开发中...'),
+          onPress: handlePrivacySettings,
         },
         {
           id: 'security',
@@ -100,7 +505,7 @@ export default function ProfileScreen() {
           subtitle: '密码和安全设置',
           icon: 'lock-closed-outline',
           type: 'navigation' as const,
-          onPress: () => Alert.alert('账户安全', '功能开发中...'),
+          onPress: handleSecuritySettings,
         },
       ],
     },
@@ -167,7 +572,7 @@ export default function ProfileScreen() {
           subtitle: '备份您的记录数据',
           icon: 'cloud-upload-outline',
           type: 'navigation' as const,
-          onPress: () => Alert.alert('数据备份', '功能开发中...'),
+          onPress: handleDataBackup,
         },
         {
           id: 'sync',
@@ -184,7 +589,7 @@ export default function ProfileScreen() {
           subtitle: '管理本地存储空间',
           icon: 'folder-outline',
           type: 'navigation' as const,
-          onPress: () => Alert.alert('存储管理', '功能开发中...'),
+          onPress: handleStorageManagement,
         },
         {
           id: 'export',
@@ -192,7 +597,7 @@ export default function ProfileScreen() {
           subtitle: '导出记录为文件',
           icon: 'download-outline',
           type: 'navigation' as const,
-          onPress: () => Alert.alert('导出数据', '功能开发中...'),
+          onPress: handleDataExport,
         },
       ],
     },
@@ -205,7 +610,7 @@ export default function ProfileScreen() {
           subtitle: '管理您的好友列表',
           icon: 'people-outline',
           type: 'navigation' as const,
-          onPress: () => Alert.alert('好友管理', '功能开发中...'),
+          onPress: handleFriendManagement,
         },
         {
           id: 'share_settings',
@@ -213,7 +618,7 @@ export default function ProfileScreen() {
           subtitle: '设置默认分享选项',
           icon: 'share-outline',
           type: 'navigation' as const,
-          onPress: () => Alert.alert('分享设置', '功能开发中...'),
+          onPress: handleShareSettings,
         },
         {
           id: 'social_connect',
@@ -234,7 +639,7 @@ export default function ProfileScreen() {
           subtitle: '获取帮助或提供反馈',
           icon: 'help-circle-outline',
           type: 'navigation' as const,
-          onPress: () => Alert.alert('帮助与反馈', '功能开发中...'),
+          onPress: handleHelpFeedback,
         },
         {
           id: 'about',
@@ -269,20 +674,21 @@ export default function ProfileScreen() {
           onPress: () => Alert.alert('版本信息', '当前版本：v1.0.0\n构建号：1\n发布日期：2024-01-15'),
         },
         {
+          id: 'test-user',
+          title: '创建测试用户',
+          subtitle: '创建测试用户并登录',
+          icon: 'person-add-outline',
+          type: 'action' as const,
+          onPress: createTestUser,
+        },
+        {
           id: 'logout',
           title: '退出登录',
+          subtitle: '退出当前账户',
           icon: 'log-out-outline',
           type: 'action' as const,
-          onPress: () => {
-            Alert.alert(
-              '退出登录',
-              '确定要退出当前账户吗？',
-              [
-                { text: '取消', style: 'cancel' },
-                { text: '确定', style: 'destructive', onPress: () => Alert.alert('已退出', '功能开发中...') },
-              ]
-            );
-          },
+          onPress: handleLogout,
+          color: '#FF6B6B',
         },
       ],
     },
@@ -367,7 +773,7 @@ export default function ProfileScreen() {
             <Image source={{ uri: user.avatar }} style={styles.avatar} />
             <TouchableOpacity 
               style={styles.editAvatarButton}
-              onPress={() => Alert.alert('更换头像', '功能开发中...')}
+              onPress={handleChangeAvatar}
             >
               <Ionicons name="camera" size={16} color={colors.white} />
             </TouchableOpacity>
@@ -408,6 +814,67 @@ export default function ProfileScreen() {
         <View style={styles.bottomPadding} />
         </FadeInView>
       </ScrollView>
+      
+      {/* 编辑个人资料模态框 */}
+      <EditProfileModal
+        visible={editProfileVisible}
+        initialProfile={user}
+        onClose={() => setEditProfileVisible(false)}
+        onSave={handleSaveProfile}
+      />
+      
+      {/* 隐私设置模态框 */}
+      <PrivacySettingsModal
+        visible={privacySettingsVisible}
+        initialSettings={privacySettings}
+        onClose={() => setPrivacySettingsVisible(false)}
+        onSave={handleSavePrivacySettings}
+      />
+      
+      {/* 安全设置模态框 */}
+      <SecuritySettingsModal
+        visible={securitySettingsVisible}
+        initialSettings={securitySettings}
+        onClose={() => setSecuritySettingsVisible(false)}
+        onSave={handleSaveSecuritySettings}
+      />
+      
+      {/* 数据备份模态框 */}
+      <DataBackupModal
+        visible={dataBackupVisible}
+        initialSettings={backupSettings}
+        onClose={() => setDataBackupVisible(false)}
+        onSave={handleSaveBackupSettings}
+      />
+
+      <StorageManagementModal
+        visible={storageManagementVisible}
+        onClose={() => setStorageManagementVisible(false)}
+      />
+
+      <DataExportModal
+        visible={dataExportVisible}
+        initialSettings={exportSettings}
+        onClose={() => setDataExportVisible(false)}
+        onExport={handleSaveExportSettings}
+      />
+
+      <FriendManagementModal
+        visible={friendManagementVisible}
+        onClose={() => setFriendManagementVisible(false)}
+      />
+
+      <ShareSettingsModal
+        visible={shareSettingsVisible}
+        initialSettings={shareSettings}
+        onClose={() => setShareSettingsVisible(false)}
+        onSave={handleSaveShareSettings}
+      />
+
+      <HelpFeedbackModal
+        visible={helpFeedbackVisible}
+        onClose={() => setHelpFeedbackVisible(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -573,6 +1040,6 @@ const createStyles = (colors: any, responsiveUtils: any) => StyleSheet.create({
     marginLeft: spacing.sm,
   },
   bottomPadding: {
-    height: 100,
+    height: Platform.OS === 'web' ? 120 : 100, // 为底部导航栏留出空间
   },
 });

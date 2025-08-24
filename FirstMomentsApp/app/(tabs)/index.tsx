@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, Platform } from 'react-native';
 import {
   View,
@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { spacing } from '../../src/styles';
 import { 
@@ -33,6 +33,27 @@ const HomeScreen = () => {
   const responsiveUtils = useResponsive();
   const router = useRouter();
   const styles = createStyles(colors, responsiveUtils);
+  const [isVisible, setIsVisible] = useState(true);
+
+  // 组件挂载和卸载日志
+  useEffect(() => {
+    console.log('[HomeScreen] Component mounted');
+    return () => {
+      console.log('[HomeScreen] Component unmounted');
+    };
+  }, []);
+
+  // 处理页面焦点变化
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log('[HomeScreen] Page focused');
+      setIsVisible(true);
+      return () => {
+        console.log('[HomeScreen] Page blurred');
+        setIsVisible(false);
+      };
+    }, [])
+  );
   
   const quickActions = [
     { id: 1, title: '创建记录', icon: 'add-circle', color: colors.primary, route: '/create' },
@@ -68,8 +89,12 @@ const HomeScreen = () => {
     },
   ];
 
+  if (!isVisible) {
+    return null;
+  }
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView key="home-screen" style={styles.container}>
       <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -191,7 +216,7 @@ const createStyles = (colors: any, responsiveUtils: any) => StyleSheet.create({
     }),
   },
   scrollContent: {
-    paddingBottom: responsive.spacing.xl,
+    paddingBottom: Platform.OS === 'web' ? 100 : responsive.spacing.xl, // 为底部导航栏留出空间
     ...(Platform.OS === 'web' && {
       minHeight: '100vh' as any,
     }),

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -20,15 +20,16 @@ import { useResponsive, responsive } from '../../src/utils/responsive';
 import { fontSize, fontWeight, spacing, borderRadius, shadows } from '../../src/styles';
 import { useDispatch, useSelector } from 'react-redux';
 import { createMomentAsync } from '../../src/store/slices/momentSlice';
-import { RootState } from '../../src/store';
+import { RootState, AppDispatch } from '../../src/store';
 import { CreateMomentData, MoodType } from '../../src/services/momentAPI';
+import { useFocusEffect } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
 const CreateScreen = () => {
   const { theme } = useTheme();
   const responsiveUtils = useResponsive();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const { isCreating } = useSelector((state: RootState) => state.moment);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -36,6 +37,34 @@ const CreateScreen = () => {
   const [mood, setMood] = useState('');
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [isVisible, setIsVisible] = useState(true);
+
+  // 组件挂载和卸载日志
+  useEffect(() => {
+    console.log('[CreateScreen] Component mounted');
+    return () => {
+      console.log('[CreateScreen] Component unmounted');
+      // 清理状态
+      setTitle('');
+      setContent('');
+      setSelectedImages([]);
+      setMood('');
+      setLocation('');
+      setSelectedTags([]);
+    };
+  }, []);
+
+  // 处理页面焦点变化
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log('[CreateScreen] Page focused');
+      setIsVisible(true);
+      return () => {
+        console.log('[CreateScreen] Page blurred');
+        setIsVisible(false);
+      };
+    }, [])
+  );
 
   const colors = theme.colors;
   const styles = createStyles(colors, responsiveUtils);
@@ -104,16 +133,24 @@ const CreateScreen = () => {
     }
   };
 
+  // 获取当前档案
+  const { currentProfile } = useSelector((state: RootState) => state.profile);
+
   const handleSave = async () => {
     if (!title.trim()) {
       Alert.alert('提示', '请输入记录标题');
+      return;
+    }
+
+    if (!currentProfile) {
+      Alert.alert('错误', '请先选择一个档案');
       return;
     }
     
     const momentData: CreateMomentData = {
        title: title.trim(),
        content: content.trim() || title.trim(),
-       profileId: 'default-profile', // 需要从用户状态获取
+       profileId: currentProfile.id,
        tags: selectedTags,
        mood: mood as MoodType,
        location: location.trim() ? {
@@ -127,7 +164,7 @@ const CreateScreen = () => {
      };
 
     try {
-       await dispatch(createMomentAsync(momentData)).unwrap();
+      await dispatch(createMomentAsync({ data: momentData, files: undefined })).unwrap();
       Alert.alert('成功', '记录已保存！', [
         { text: '确定', onPress: () => {
           // 重置表单
@@ -140,13 +177,18 @@ const CreateScreen = () => {
         }}
       ]);
     } catch (error) {
-      Alert.alert('错误', '保存失败，请重试');
+      console.error('保存记录失败:', error);
+      Alert.alert('错误', `保存失败: ${error}`);
     }
   };
 
+  if (!isVisible) {
+    return null;
+  }
+
   return (
-    <SafeAreaView style={styles.container}>
-      <FadeInView>
+    <SafeAreaView key="create-screen" style={styles.container}>
+      <FadeInView style={{ flex: 1 }}>
         {/* 头部 */}
         <LinearGradient
           colors={[colors.primary, colors.secondary]}
@@ -329,6 +371,7 @@ const createStyles = (colors: any, responsiveUtils: any) => StyleSheet.create({
   content: {
     flexGrow: 1,
     padding: responsiveUtils.getSafeAreaPadding().horizontal,
+    paddingBottom: 100, // 为底部导航栏留出空间
   },
   section: {
     marginBottom: responsiveUtils.isTablet ? responsive.spacing.xxl : responsive.spacing.xl,
